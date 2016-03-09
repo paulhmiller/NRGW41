@@ -1,7 +1,7 @@
 NRG-W41 Project
 ===============
 
-Paul Miller, paulhmiller@gmail.com, pmiller@bccrc.ca
+Project lead: Paul Miller [paulhmiller@gmail.com, pmiller@bccrc.ca]
 
 ## Summary
 
@@ -36,12 +36,15 @@ replicates and also to go back to the raw data.
 
 ## Sub-directory Information
 
+./figures
+- contains plotting R scripts and plots. T
+
 ./primary_kinetics_pool
-- data and plotting scripts for primary transplants. CSV files each contain 
-data from multiple experiments, and have both 40K CB CD34+ data and (pooled) 20K 
-and 40K CB data. My analysis shows that the results for 20K and 40K are 
-similar, so pooling is appropriate. There is also data from a single BM
-transplant experiment. All of these have both BM and PB analysis. 
+- data for primary transplants. CSV files each contain data from multiple 
+  experiments, and have both 40K CB CD34+ data and (pooled) 20K and 40K CB data. 
+  My analysis shows that the results for 20K and 40K are similar, so pooling 
+  is appropriate. There is also data from a single BM transplant experiment. 
+  All of these have both BM and PB data sets. 
 
 ./LDA_secondary
 - data and LDA calculation scripts from secondary transplants.
