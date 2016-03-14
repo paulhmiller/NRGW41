@@ -61,4 +61,5 @@ replicates and also to go back to the raw data.
 - Units of PB data are in microlitres
 - Paul's preferred PB detection threshold is 0.2/uL for leukocytes and 25/uL
   for platlets. 
-
+- There is data for NRG mice irradiated at 150 Rad. I plan to exlude this data
+  as it's difficult to know where it fits in, but others may wish to include it. 
