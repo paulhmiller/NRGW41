@@ -2,6 +2,8 @@ NRG-W41 Project
 ===============
 
 Project lead: Paul Miller [paulhmiller@gmail.com, pmiller@bccrc.ca]
+Data analyzed on Windows 10 and R v3.2.3.
+
 
 ## Summary
 
