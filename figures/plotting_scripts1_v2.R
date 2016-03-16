@@ -9,7 +9,7 @@ dev.off()
 
 library(reshape2)
 library(magicaxis)
-library(dplyr) # Call this last. Provides: filter, select, do, piping, group_by
+library(dplyr) # Call this last. Provides: filter, select, do, pipe, group_by
 
 
 ## Plotting Functions
@@ -18,6 +18,7 @@ library(dplyr) # Call this last. Provides: filter, select, do, piping, group_by
 se <- function(x) sd(x, na.rm=TRUE)/sqrt(length(x[!is.na(x)]))
 
   
+# Use for NRG versus NRG-W41
 GroupBarplot <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="black", title){
 #  Makes a grouped barplot, with strains plotted together and sexes separated.
 #  Takes plot title, name of dataframe, time-point to plot, and column number 
@@ -31,12 +32,13 @@ GroupBarplot <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="bl
     stop("error: function only handles 13 (for BM) or 12 (for PB) columns")
   }
   means <- tapply(tmp[, valueCol], list(tmp$Sex, tmp$Strain), mean, na.rm=TRUE)
+  print(means)
   means <- means+5 # this is to enable subzero plotting on log transformed data
   SEMs <- tapply(tmp[, valueCol], list(tmp$Sex, tmp$Strain), se)
   bp <- barplot(means, beside=T, yaxt="n", col=cols, ylim=5+log10(ylim), 
           xlab="", ylab=ylab, mgp=c(2.2,0.5,0), xpd=FALSE)
   magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
-  axis(2, las=2, mgp=c(3,0.6,0), at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
+  axis(2, las=2, mgp=c(3,0.6,0), hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
        labels=c(expression(10^-2), expression(10^-1),expression(10^0),
             expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
   title(main=title, line=0.5)
@@ -47,7 +49,40 @@ GroupBarplot <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="bl
 #legend(locator(1),rownames(dat),fill=c("#ee7700","#3333ff"))
 
 
-KineticsPlot <- function(dataframe, lineage="CD45.Percent", ylab, ylim, xlim=c(2,31), 
+# Use for old age
+GroupBarplot2 <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="black", title){
+  #  Makes a grouped barplot, with strains plotted together and sexes separated.
+  #  Takes plot title, name of dataframe, time-point to plot, and column number 
+  #  that contains the values to plot. 
+  tmp <- dataframe[dataframe$Week==week, ]  
+  if(ncol(tmp)==13){
+    tmp[8:13] <- log10(tmp[8:13])
+  } else if(ncol(tmp)==12){
+    tmp[8:12] <- log10(tmp[8:12])
+  } else {
+    stop("error: function only handles 13 (for BM) or 12 (for PB) columns")
+  }
+  means <- tapply(tmp[, valueCol], list(tmp$Sex, tmp$Week), mean, na.rm=TRUE)
+  means <- means+5 # this is to enable subzero plotting on log transformed data
+  SEMs <- tapply(tmp[, valueCol], list(tmp$Sex, tmp$Week), se)
+  bp <- barplot(means, beside=T, yaxt="n", col=cols, ylim=5+log10(ylim), 
+                xlab="", ylab=ylab, mgp=c(2.2,0.5,0), xpd=FALSE)
+  magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+  axis(2, las=2, mgp=c(3,0.6,0), hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
+       labels=c(expression(10^-2), expression(10^-1),expression(10^0),
+                expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+  title(main=title, line=0.5)
+  arrows(bp, means+SEMs, bp, means, lwd = 1.5, angle = 90, code = 3, length = 0.05)
+  #text(x = bp, y = GM$mean+GM$se+pdist, labels=GM$star , cex=0.7) #paste("p=",round(PLT$p.value,2))
+  box()
+}
+#legend(locator(1),rownames(dat),fill=c("#ee7700","#3333ff"))
+
+
+
+
+# Use for NRG verus NRG-W41 plots:
+KineticsPlot1 <- function(dataframe, lineage="CD45.Percent", ylab, ylim, xlim=c(2,31), 
                          lty=1, cols="black", pcex=1, lcex=1, title){
   #  Makes a grouped lineplot, with strains plotted together and sexes separated.
   #  Takes plot title, name of dataframe, and column number with values. 
@@ -57,12 +92,23 @@ KineticsPlot <- function(dataframe, lineage="CD45.Percent", ylab, ylim, xlim=c(2
   tmp[9] <- log10(tmp[9])
   tmp <- tmp[tmp$variable==lineage, ]
   tmp <- dplyr::summarise(group_by(tmp, Week, Strain, Sex, variable), mean=mean(value, na.rm=TRUE), se=se(value))
-  plot(tmp$mean ~ tmp$Week, type="n", axes=F,  ylim=log10(ylim), xlim=xlim, 
+  plot(tmp$mean ~ tmp$Week, type="n", axes=F,  ylim=log10(ylim), xlim=xlim, col=tmp$Strain,
        xlab="weeks post-transplant", ylab=ylab, mgp=c(axtitledist,0.5,0))
   sep1 <- tmp[tmp$Strain=="NRG" & tmp$Sex=="M", ]
+  sep1$Week <- sep1$Week + (vAdj/1)
   sep2 <- tmp[tmp$Strain=="NRG" & tmp$Sex=="F", ]
+  sep2$Week <- sep2$Week + (vAdj/2)
   sep3 <- tmp[tmp$Strain=="NRG-W41" & tmp$Sex=="M", ]
+  sep3$Week <- sep3$Week + (-vAdj/2)
   sep4 <- tmp[tmp$Strain=="NRG-W41" & tmp$Sex=="F", ]
+  arrows(sep1$Week, sep1$mean+sep1$se, sep1$Week, sep1$mean-sep1$se, col=c(cols[1]), 
+        lwd = 1.5, angle = 90, code = 3, length = 0.02) 
+  arrows(sep2$Week, sep2$mean+sep2$se, sep2$Week, sep2$mean-sep2$se, col=c(cols[1]), 
+        lwd = 1.5, angle = 90, code = 3, length = 0.02) 
+  arrows(sep3$Week, sep3$mean+sep3$se, sep3$Week, sep3$mean-sep3$se, col=c(cols[2]), 
+        lwd = 1.5, angle = 90, code = 3, length = 0.02) 
+  arrows(sep4$Week, sep4$mean+sep4$se, sep4$Week, sep4$mean-sep4$se, col=c(cols[2]), 
+        lwd = 1.5, angle = 90, code = 3, length = 0.02)  sep4$Week <- sep4$Week + (-vAdj/1)
   points(sep1$mean ~ sep1$Week, cex=pcex, pch=pchs1[1], col=cols[1]) 
   points(sep2$mean ~ sep2$Week, cex=pcex, pch=pchs1[2], col=cols[1]) 
   points(sep3$mean ~ sep3$Week, cex=pcex, pch=pchs1[1], col=cols[2])
@@ -71,11 +117,9 @@ KineticsPlot <- function(dataframe, lineage="CD45.Percent", ylab, ylim, xlim=c(2
   lines(sep2$mean ~ sep2$Week, cex=lcex, lty=lty, col=cols[1])
   lines(sep3$mean ~ sep3$Week, cex=lcex, lty=lty, col=cols[2])
   lines(sep4$mean ~ sep4$Week, cex=lcex, lty=lty, col=cols[2])
-  arrows(tmp$Week, tmp$mean+tmp$se, tmp$Week, tmp$mean-tmp$se, col=c(cols[1],cols[1],cols[2],cols[2]), 
-         lwd = 1.5, angle = 90, code = 3, length = 0.02) 
   magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
-  axis(side=1, at=c(3, 6, 10, 20, 30),  mgp=c(0.8,0.4,0), cex=0.8, tck=-0.05)
-  axis(2, las=2, mgp=c(2.5,0.2,0), tck=-0.01, at=c(-2, -1, 0, 1, 2, 3, 4, 5), 
+  axis(side=1, at=c(3, 6, 10, 20, 30),  mgp=c(0.8,0.4,0), cex=0.8, tck=-0.03)
+  axis(2, las=2, mgp=c(2.5,1.7,0), tck=-0.01, hadj=0, at=c(-2, -1, 0, 1, 2, 3, 4, 5), 
        labels=c(expression(10^-2), expression(10^-1),expression(10^0),expression(10^1),
               expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
   title(main=title, line=0.5)
@@ -83,15 +127,111 @@ KineticsPlot <- function(dataframe, lineage="CD45.Percent", ylab, ylim, xlim=c(2
   box()
 }
 
+# Use for NSG verus NRG plots:
+KineticsPlot2 <- function(dataframe, lineage="CD45.Percent", ylab, ylim, xlim=c(2,31), 
+                          lty=1, cols="black", pcex=1, lcex=1, title){
+  #  Makes a grouped lineplot, with strains plotted together and sexes separated.
+  #  Takes plot title, name of dataframe, and column number with values. 
+  #  Data is log10 transformed for mean and SEM calculation. 
+  #  Requires dplyr and reshape. 
+  tmp <- melt(dataframe, id.vars=c("Exp", "Week", "Strain", "Sex", "Irradiation.Dose", "Input", "Mouse"))
+  tmp[9] <- log10(tmp[9])
+  tmp <- tmp[tmp$variable==lineage, ]
+  tmp <- dplyr::summarise(group_by(tmp, Week, Strain, Sex, variable), mean=mean(value, na.rm=TRUE), se=se(value))
+  plot(tmp$mean ~ tmp$Week, type="n", axes=F,  ylim=log10(ylim), xlim=xlim, col=tmp$Strain,
+       xlab="weeks post-transplant", ylab=ylab, mgp=c(axtitledist,0.5,0))
+  sep1 <- tmp[tmp$Strain=="NRG", ]
+  sep1$Week <- sep1$Week + (vAdj/1)
+  sep2 <- tmp[tmp$Strain=="NSG", ]
+  sep2$Week <- sep2$Week + (vAdj/2)
+  arrows(sep1$Week, sep1$mean+sep1$se, sep1$Week, sep1$mean-sep1$se, col=c(cols[1]), 
+         lwd = 1.5, angle = 90, code = 3, length = 0.02) 
+  arrows(sep2$Week, sep2$mean+sep2$se, sep2$Week, sep2$mean-sep2$se, col=c(cols[1]), 
+         lwd = 1.5, angle = 90, code = 3, length = 0.02) 
+  points(sep1$mean ~ sep1$Week, cex=pcex, pch=pchs1[1], col=cols[1]) 
+  points(sep2$mean ~ sep2$Week, cex=pcex, pch=pchs1[2], col=cols[1]) 
+  lines(sep1$mean ~ sep1$Week, cex=lcex, lty=lty, col=cols[1])
+  lines(sep2$mean ~ sep2$Week, cex=lcex, lty=lty, col=cols[1])
+  magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+  axis(side=1, at=c(3, 6, 10, 20, 30),  mgp=c(0.8,0.4,0), cex=0.8, tck=-0.03)
+  axis(2, las=2, mgp=c(2.5,1.7,0), tck=-0.01, hadj=0, at=c(-2, -1, 0, 1, 2, 3, 4, 5), 
+       labels=c(expression(10^-2), expression(10^-1),expression(10^0),expression(10^1),
+                expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+  title(main=title, line=0.5)
+  #text(x = bp, y = GM$mean+GM$se+pdist, labels=GM$star , cex=0.7) #paste("p=",round(PLT$p.value,2))
+  box()
+}
+
+
+
+# Use for Old Age plots:
+KineticsPlot2 <- function(dataframe, lineage="Human.Percent", ylab, ylim, xlim=c(2,31), 
+                          lty=1, cols="black", pcex=1, lcex=1, title){
+  #  Makes a grouped lineplot, with strains plotted together and sexes separated.
+  #  Takes plot title, name of dataframe, and column number with values. 
+  #  Data is log10 transformed for mean and SEM calculation. 
+  #  Requires dplyr and reshape. 
+  tmp <- melt(dataframe, id.vars=variables)
+  tmp[9] <- log10(tmp[9])
+  tmp <- tmp[tmp$variable==lineage, ]
+  tmp <- dplyr::summarise(group_by(tmp, Week, Sex, variable), mean=mean(value, na.rm=TRUE), se=se(value))
+  plot(tmp$mean ~ tmp$Week, type="n", axes=F,  ylim=log10(ylim), xlim=xlim, col=tmp$Strain,
+       xlab="weeks post-transplant", ylab=ylab, mgp=c(axtitledist,0.5,0))
+  sep1 <- tmp[tmp$Sex=="F", ]
+  sep1$Week <- sep1$Week + (vAdj/1)
+  sep2 <- tmp[tmp$Sex=="M", ]
+  sep2$Week <- sep2$Week + (vAdj/2)
+  print (sep1)
+  arrows(sep1$Week, sep1$mean+sep1$se, sep1$Week, sep1$mean-sep1$se, col=c(cols[1]), 
+         lwd = 1.5, angle = 90, code = 3, length = 0.02) 
+  arrows(sep2$Week, sep2$mean+sep2$se, sep2$Week, sep2$mean-sep2$se, col=c(cols[1]), 
+         lwd = 1.5, angle = 90, code = 3, length = 0.02) 
+  points(sep1$mean ~ sep1$Week, cex=pcex, pch=pchs1[1], col=cols[1]) 
+  points(sep2$mean ~ sep2$Week, cex=pcex, pch=pchs1[2], col=cols[1]) 
+  lines(sep1$mean ~ sep1$Week, cex=lcex, lty=lty, col=cols[1])
+  lines(sep2$mean ~ sep2$Week, cex=lcex, lty=lty, col=cols[1])
+  magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+  axis(side=1, at=c(3, 6, 10, 20, 30),  mgp=c(0.8,0.4,0), cex=0.8, tck=-0.03)
+  axis(2, las=2, mgp=c(2.5,1.7,0), tck=-0.01, hadj=0, at=c(-2, -1, 0, 1, 2, 3, 4, 5), 
+       labels=c(expression(10^-2), expression(10^-1),expression(10^0),expression(10^1),
+                expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+  title(main=title, line=0.5)
+  #text(x = bp, y = GM$mean+GM$se+pdist, labels=GM$star , cex=0.7) #paste("p=",round(PLT$p.value,2))
+  box()
+}
+variables <- names(BM[1:7])
+KineticsPlot2(BM, lineage="Human.Percent",    ylab=BMylab, ylim=c(1, 100), xlim=xlim, 
+              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
+
+
+
+
+
 
 setwd('C:/Users/paulm/CRC Paul/PROJECTS/NRGW41/figures')
 
 
-##### CB38K+20K - BM #####
+# Standard widths for figures: 1 column, 85 mm; 1.5 column, 114 mm; and 2 column, 174 mm (the full width of the page).
+ppi <- 300
+pchs1 <- c(17,16)
+BMylab <- "% total BM cells"
+PBylab <- expression(paste(cells~x~10^3,"/mL"))
+cols3 <- c("#ee7700","#3333ff")  # colours for bar plots
+xlim <- c(1.5, 30.5)   # X-axis range on line plots
+lcols <- c("#000000","#CD0000")  # line colors
+lty <- 1    # linetype (1=solid, 2=dash, 3=dotted)
+pcex <- 1.8   # point scaling factor
+lcex <- 1   # line scaling factor
+axtitledist <- 1.6  # adjusts distance of x and y axis titles on kinetics plots
+vAdj <- 0.0  # Jitter-like effect on x-axis, use values between 0-2
 
+
+##### NRG versus NRG-W41 #####
+
+##### BM #####
 # Read in BM. Uses a csv file that contains BM from multiple experiments
 # Each AMQR letter refer to each experiment
-BM <- read.csv("../primary_kinetics_pool/AMQR CB20K40K BM kinetics.csv")  #, colClasses=c(Mouse="character"))
+BM <- read.csv("../primary_kinetics_pool/AMQRG CB20K40K BM kinetics.csv")  #, colClasses=c(Mouse="character"))
 # Adjust time-points so that BMa can be pooled:
 BM$Week[BM$Week==24] <- 20 # change 24 to 20
 BM <- BM[!(BM$Week==18),] # remove week 18. Does not have lineage info. 
@@ -104,9 +244,6 @@ BM <- BM[!(BM$Irradiation.Dose=="150 Rad" & BM$Strain=="NRG"),]
 levels(BM$Irradiation.Dose)[levels(BM$Irradiation.Dose)=="0 Rad"] <- "Non-irradiated"
 levels(BM$Irradiation.Dose)[levels(BM$Irradiation.Dose)=="150 Rad"] <- "Irradiated" 
 levels(BM$Irradiation.Dose)[levels(BM$Irradiation.Dose)=="900 Rad"] <- "Irradiated"
-# Check if any na's. If so, need to decide what to do about them
-#apply(BM, 2, function(x) sum(is.na(x)))
-
 
 
 ##### CB38K+20K - PB #####
@@ -125,27 +262,20 @@ PB <- PB[!(PB$Irradiation.Dose=="150 Rad" & PB$Strain=="NRG"),]
 levels(PB$Irradiation.Dose)[levels(PB$Irradiation.Dose)=="0 Rad"] <- "Non-irradiated"
 levels(PB$Irradiation.Dose)[levels(PB$Irradiation.Dose)=="150 Rad"] <- "Irradiated" 
 levels(PB$Irradiation.Dose)[levels(PB$Irradiation.Dose)=="900 Rad"] <- "Irradiated"
-# Check if any na's. If so, need to decide what to do about them
-#apply(PB, 2, function(x) sum(is.na(x)))
-
 
 
 # Select Data
 BMi <- BM[BM$Irradiation.Dose=="Irradiated" ,]
 PBi <- PB[PB$Irradiation.Dose=="Irradiated" ,]
+BMni <- BM[BM$Irradiation.Dose=="Non-irradiated" ,]
+PBni <- PB[PB$Irradiation.Dose=="Non-irradiated" ,]
 
 
-
-# Plotting 
-ppi <- 300
-pchs1 <- c(17,16)
-BMylab <- "% total BM cells"
-PBylab <- expression(paste(cells~x~10^3,"/mL"))
+# Week 20 barplot
 cols3 <- c("#ee7700","#3333ff")  # colours for bar plots
 
-# Week 20 barplots
 #pdf(file="./week20.pdf", width=11.5/2.54, height=8/2.54) #, family='Calibri')
-#png("plot.png", width=(11.5*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=10)
+#png("plot1.png", width=(11.5*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=10)
 par(mfrow=c(2,4), mar=c(2.1, 3.5, 2.1, 1.1), cex=0.7, mgp=c(2,0.6,0))
 # BMi
 GroupBarplot(BMi, week=20, valueCol=8,  cols=cols3, ylab=BMylab, ylim=c(1, 100), title="CD45")
@@ -161,33 +291,117 @@ GroupBarplot(PBi, week=20, valueCol=12, cols=cols3, ylab=PBylab, ylim=c(10, 1000
 
 
 # Kinetics plots
-xlim <- c(1.5, 30.5)   # X-axis range
 lcols <- c("#000000","#CD0000")  # line colors
 lty <- 1    # linetype (1=solid, 2=dash, 3=dotted)
-pcex <- 1.6   # point scaling factor
-lcex <- 1   # line scaling factor
-axtitledist <- 1.5  # adjusts distance of x and y axis titles
+vAdj <- 0.0  # Jitter-like effect, use values between 0-2
 
-png("plot.png", width=(11.5*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
-par(mfrow=c(2,4), mar=c(3, 2.9, 2, 0.3), cex=0.7, mgp=c(2,0.6,0))
+png("BM_PB_irrad_kinetics.png", width=(17.4*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
+par(mfrow=c(2,4), mar=c(3.2, 2.9, 2, 0.8), cex=0.7, mgp=c(2,0.6,0))
 
 # BMi
-KineticsPlot(BMi, lineage="CD45.Percent",    ylab=BMylab, ylim=c(1, 100), xlim=xlim, 
+KineticsPlot1(BMi, lineage="CD45.Percent",    ylab=BMylab, ylim=c(0.1, 100), xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
-KineticsPlot(BMi, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
+KineticsPlot1(BMi, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
-KineticsPlot(BMi, lineage="CD19.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
+KineticsPlot1(BMi, lineage="CD19.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
-KineticsPlot(BMi, lineage="GPA.Percent",     ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
+KineticsPlot1(BMi, lineage="GPA.Percent",     ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA")
 # PBi
-KineticsPlot(PBi, lineage="CD45",      ylab=PBylab, ylim=c(1, 1000), xlim=xlim, 
+KineticsPlot1(PBi, lineage="CD45",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
-KineticsPlot(PBi, lineage="CD33.15",   ylab=PBylab, ylim=c(1, 1000), xlim=xlim, 
+KineticsPlot1(PBi, lineage="CD33.15",   ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
-KineticsPlot(PBi, lineage="CD19",      ylab=PBylab, ylim=c(1, 1000), xlim=xlim, 
+KineticsPlot1(PBi, lineage="CD19",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
-KineticsPlot(PBi, lineage="Platelets", ylab=PBylab, ylim=c(25, 10000), xlim=xlim, 
+KineticsPlot1(PBi, lineage="Platelets", ylab=PBylab, ylim=c(30, 10000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets")
+dev.off()
+
+
+
+png("BM_PB_nonirrad_kinetics.png", width=(17.4*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
+par(mfrow=c(2,4), mar=c(3.2, 2.9, 2, 0.8), cex=0.7, mgp=c(2,0.6,0))
+
+# BMi
+KineticsPlot1(BMni, lineage="CD45.Percent",    ylab=BMylab, ylim=c(0.1, 100), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
+KineticsPlot1(BMni, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
+KineticsPlot1(BMni, lineage="CD19.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
+KineticsPlot1(BMni, lineage="GPA.Percent",     ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA")
+# PBi
+KineticsPlot1(PBni, lineage="CD45",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
+KineticsPlot1(PBni, lineage="CD33.15",   ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
+KineticsPlot1(PBni, lineage="CD19",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
+KineticsPlot1(PBni, lineage="Platelets", ylab=PBylab, ylim=c(30, 10000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets")
+dev.off()
+
+
+
+
+##### NSG versus NRG #####
+##### BM #####
+
+BM <- read.csv("../NSGvsNRG/C_BM kinetics.csv")  #, colClasses=c(Mouse="character"))
+# Adjust time-points so that BMa can be pooled:
+BM$Week[BM$Week==24] <- 20
+BM$Week[BM$Week==8] <- 10 
+BM <- BM[!(BM$Week==17),] #remove week 17
+# Change low values in leukocyte columns to detection threshold
+BM[,8:13][BM[,8:13] < 0.01] <- 0.01  
+#Change irradiation doses to enable merge
+levels(BM$Irradiation.Dose)[levels(BM$Irradiation.Dose)=="250 Rad"] <- "Irradiated" 
+levels(BM$Irradiation.Dose)[levels(BM$Irradiation.Dose)=="800 Rad"] <- "Irradiated"
+
+
+##### PB #####
+
+PB <- read.csv("../NSGvsNRG/C_PB kinetics.csv")  #, colClasses=c(Mouse="character"))
+# Adjust time-points so that BMa can be pooled:
+PB$Week[PB$Week==24] <- 20
+PB$Week[PB$Week==8] <- 10 
+PB <- PB[!(PB$Week==17),] #remove week 17
+# Change low values in leukocyte & platelet columns to detection threshold
+PB[,8:11][PB[,8:11] < 0.2] <- 0.2 
+PB[,12][PB[,12] < 25] <- 25 
+#Change irradiation doses to enable merge
+levels(PB$Irradiation.Dose)[levels(PB$Irradiation.Dose)=="250 Rad"] <- "Irradiated" 
+levels(PB$Irradiation.Dose)[levels(PB$Irradiation.Dose)=="800 Rad"] <- "Irradiated"
+
+
+# Kinetics plots
+xlim <- c(1.5, 20.5)   # X-axis range
+lcols <- c("#000000","#CD0000")  # line colors
+lty <- 1    # linetype (1=solid, 2=dash, 3=dotted)
+pchs1 <- c(16,1)
+
+png("BM_PB_NSG_kinetics.png", width=(17.4*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
+par(mfrow=c(2,4), mar=c(3.2, 2.9, 2, 0.8), cex=0.7, mgp=c(2,0.6,0))
+
+# BMi
+KineticsPlot2(BM, lineage="CD45.Percent",    ylab=BMylab, ylim=c(1, 100), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
+KineticsPlot2(BM, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
+KineticsPlot2(BM, lineage="CD19.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
+KineticsPlot2(BM, lineage="GPA.Percent",     ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA")
+# PBi
+KineticsPlot2(PB, lineage="CD45",      ylab=PBylab, ylim=c(1, 1000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
+KineticsPlot2(PB, lineage="CD33.15",   ylab=PBylab, ylim=c(1, 1000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
+KineticsPlot2(PB, lineage="CD19",      ylab=PBylab, ylim=c(1, 1000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
+KineticsPlot2(PB, lineage="Platelets", ylab=PBylab, ylim=c(30, 10000), xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets")
 dev.off()
 
@@ -196,10 +410,48 @@ dev.off()
 
 
 
+##### Old Age #####
+##### BM #####
+
+BM <- read.csv("../old_age/OldAge2_150504.csv", strip.white=TRUE)  #, colClasses=c(Mouse="character"))
+Exp <- rep("OldAge2", nrow(BM))
+BM <- cbind(Exp, BM)
+BM <- BM[c(1,6, 7:11, 22:27)]
+# Adjust time-points so that BMa can be pooled:
+BM$Week <- round(BM$Week, digits=0)
+BM$Week[BM$Week==21] <- 20
+# Change low values in leukocyte columns to detection threshold
+BM[,8:13][BM[,8:13] < 0.01] <- 0.01  
+
+# Select Data
+BM34 <- BM[BM$Cell.type=="CD34+" ,]
+BM49f <- BM[BM$Cell.type=="50 49f+" ,]
+
+
+#pdf(file="./week20.pdf", width=11.5/2.54, height=8/2.54) #, family='Calibri')
+png("Gaby1.png", width=(3/4)*(11.5*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=10)
+par(mfrow=c(2,3), mar=c(2.1, 3.5, 2.1, 1.1), cex=0.7, mgp=c(2,0.6,0))
+
+# BM
+# CD34
+GroupBarplot2(BM34, week=c(20, 25), valueCol=8,  cols=cols3, ylab=BMylab, ylim=c(1, 100), title="CD45")
+GroupBarplot2(BM34, week=c(20, 25), valueCol=9,  cols=cols3, ylab=BMylab, ylim=c(1, 100), title="GM")
+GroupBarplot2(BM34, week=c(20, 25), valueCol=10, cols=cols3, ylab=BMylab, ylim=c(1, 100), title="B Lymphoid")
+# CD49f
+GroupBarplot2(BM49f, week=c(20, 25), valueCol=8,  cols=cols3, ylab=BMylab, ylim=c(0.01, 100), title="CD45")
+GroupBarplot2(BM49f, week=c(20, 25), valueCol=9,  cols=cols3, ylab=BMylab, ylim=c(0.01, 100), title="GM")
+GroupBarplot2(BM49f, week=c(20, 25), valueCol=10, cols=cols3, ylab=BMylab, ylim=c(0.01, 100), title="B Lymphoid")
 
 
 
 
+# Kinetics plots
+xlim <- c(1.5, 46.5)   # X-axis range
+lcols <- c("#000000","#CD0000")  # line colors
+lty <- 1    # linetype (1=solid, 2=dash, 3=dotted)
+pchs1 <- c(16,1)
+
+variables <- names(BM[1:7])
 
 
 

@@ -52,6 +52,12 @@ replicates and also to go back to the raw data.
 ./LDA_secondary
 - data and LDA calculation scripts from secondary transplants.
 
+./NSGvsNRG
+- data from the NSG versus NRG experiments performed by Kiran and Paul.
+
+./old_age
+- Gaby's data from the old age experiments (which was about more than just the
+  age of mice)
 ./barcoding
 - information on the barcoded samples. Currently a bit of a mess as I am still
   working on this. 

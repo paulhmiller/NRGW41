@@ -98,7 +98,7 @@ discard <- sample(unique(dat$Mouse[dat$Week==3 & dat$Strain=="NRG" & dat$Sex=="F
 dat$send[dat$Mouse==discard[1] & dat$Week==3 & dat$Strain=="NRG" & dat$Sex=="F" & dat$Irradiation=="900 Rad"] <- "discard"
 dat$send[dat$Mouse==discard[2] & dat$Week==3 & dat$Strain=="NRG" & dat$Sex=="F" & dat$Irradiation=="900 Rad"] <- "discard"
 
-write.table(dat, file="barcodes_send_160314_trimmed.csv", sep=",", col.names=NA)
+write.table(dat, file="barcodes_send_160314_v2.csv", sep=",", col.names=NA)
 
 
 nrow(dat[dat$send=="send", ])
@@ -114,83 +114,13 @@ tmp[tmp$send=="send", ]
 
 
 
-###### DUMP ########
-
-
-#all mice-timepoints with at least one sample
-all.u <- count(tmp, vars = c("Week", "Strain", "Sex", "Irradiation")) #count number of unique combos
-all.uc <- nrow(all.u)
-all<- nrow(melt(tmp,id.vars=c("Week","Strain","Sex","Irradiation"),na.rm=TRUE)) #convert to tall to get number of barcode tubes
-#just irradiated
-tmp <- tmp[tmp$Irradiation!="0 Rad" ,]
-all.u <- count(tmp, vars = c("Week", "Strain", "Sex", "Irradiation")) #count number of unique combos
-all.uc <- nrow(all.u)
-all<- nrow(melt(tmp,id.vars=c("Week","Strain","Sex","Irradiation"),na.rm=TRUE)) #convert to tall to get number of barcode tubes
-
-all.u <- count(tmp, vars = c("Week", "Strain", "Sex", "Irradiation")) #count number of unique combos
-all.uc <- nrow(all.u)
-all<- nrow(melt(tmp,id.vars=c("Week","Strain","Sex","Irradiation"),na.rm=TRUE)) #convert to tall to get number of barcode tubes
-
-print(c("number of tube for sequencing:", all))
-tmp
-all.u
-
-
-
-
-
-
-
-
-
-
-
-#just one timepoint, irradiated:
-tmp2 <- tmp[tmp$Week==3,]
-all.u <- count(tmp, vars = c("Week", "Strain", "Sex", "Irradiation")) #count number of unique combos
-all.uc <- nrow(all.u)
-all<- nrow(melt(tmp,id.vars=c("Week","Strain","Sex","Irradiation"),na.rm=TRUE)) #convert to tall to get number of barcode tubes
-#just one timepoint, irradiated:
-tmp2 <- tmp[tmp$Week==6,]
-all.u <- count(tmp, vars = c("Week", "Strain", "Sex", "Irradiation")) #count number of unique combos
-all.uc <- nrow(all.u)
-all<- nrow(melt(tmp,id.vars=c("Week","Strain","Sex","Irradiation"),na.rm=TRUE)) #convert to tall to get number of barcode tubes
-#just one timepoint, irradiated:
-tmp2 <- tmp[tmp$Week==10,]
-all.u <- count(tmp, vars = c("Week", "Strain", "Sex", "Irradiation")) #count number of unique combos
-all.uc <- nrow(all.u)
-all<- nrow(melt(tmp,id.vars=c("Week","Strain","Sex","Irradiation"),na.rm=TRUE)) #convert to tall to get number of barcode tubes
-#just one timepoint, irradiated:
-tmp2 <- tmp[tmp$Week==20,]
-all.u <- count(tmp, vars = c("Week", "Strain", "Sex", "Irradiation")) #count number of unique combos
-all.uc <- nrow(all.u)
-all<- nrow(melt(tmp,id.vars=c("Week","Strain","Sex","Irradiation"),na.rm=TRUE)) #convert to tall to get number of barcode tubes
-#just one timepoint, irradiated:
-tmp2 <- tmp[tmp$Week==30,]
-all.u <- count(tmp, vars = c("Week", "Strain", "Sex", "Irradiation")) #count number of unique combos
-all.uc <- nrow(all.u)
-all<- nrow(melt(tmp,id.vars=c("Week","Strain","Sex","Irradiation"),na.rm=TRUE)) #convert to tall to get number of barcode tubes
-
-#unique <- as.matrix(c(all.uc, irrad.uc, irr.exN150.uc, w3.uc, w6.uc, w10.uc, w20.uc, w30.uc))
-samples <- as.matrix(c(all, irrad, irr.exN150, w3, w6, w10, w20, w30))
-#out <- cbind(unique,samples)
-rownames(out) <- c("total", "irradiated", "irradiated.excl.NRG.150", "w3", "w6", "w10", "w20", "w30")
-#colnames(out) <- c("unique.mice","tubes")
-#out
-samples
-
-
 
 
 ### Sequencing logistics ###
 
 # 100 per lane
-# David will have 11 or less
 
 
-#if exlcude wk 3 & 6, I will have 86 tube. 
-#if exclude w30, 123
-#if exclude 6 & 30, 93
 
 
  
