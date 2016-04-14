@@ -356,7 +356,7 @@ tmp[tmp >  0.10]  <- "ns"
 # Kinetics plots
 # Function for NSG verus NRG plots:
 KineticsPlot2 <- function(dataframe, lineage="CD45.Percent", ylab, ylim, xlim=c(2,31), 
-                          lty=1, cols="black", pcex=1, lcex=1, title){
+                          lty=1, cols="black", pcex=1, lcex=1, title, sig){
   #  Makes a grouped lineplot, with strains plotted together and sexes separated.
   #  Takes plot title, name of dataframe, and column number with values. 
   #  Data is log10 transformed for mean and SEM calculation. 
@@ -367,7 +367,7 @@ KineticsPlot2 <- function(dataframe, lineage="CD45.Percent", ylab, ylim, xlim=c(
   tmp <- dplyr::summarise(group_by(tmp, Week, Strain, variable), mean=mean(value, na.rm=TRUE), se=se(value))
   plot(tmp$mean ~ tmp$Week, type="n", axes=F,  ylim=log10(ylim), xlim=xlim, col=tmp$Strain,
        xlab="weeks post-transplant", ylab=ylab, mgp=c(axtitledist,0.5,0))
-  text(x = unique(tmp$Week), y = 2+pdist, labels=stars[ ,lineage] , cex=0.7) #paste("p=",round(PLT$p.value,2))
+  text(x = unique(tmp$Week), y = sig, labels=stars[ ,lineage] , cex=0.9) #paste("p=",round(PLT$p.value,2))
   sep1 <- tmp[tmp$Strain=="NRG", ]
   sep1$Week <- sep1$Week + (vAdj/1)
   sep2 <- tmp[tmp$Strain=="NSG", ]
@@ -388,38 +388,35 @@ KineticsPlot2 <- function(dataframe, lineage="CD45.Percent", ylab, ylim, xlim=c(
   title(main=title, line=0.5)
   box()
 }
-KineticsPlot2(BM, lineage="GPA.Percent",    ylab=BMylab, ylim=c(1, 100), xlim=xlim, 
-              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA")
 
 xlim <- c(1.5, 20.5)   # X-axis range
 lcols <- c("#000000","#CD0000")  # line colors
 lty <- 1    # linetype (1=solid, 2=dash, 3=dotted)
 pchs1 <- c(16,1)
-pdist <- 0.0
 
-#png("BM_PB_NSG_kinetics.png", width=(17.4*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
-#par(mfrow=c(2,4), mar=c(3.2, 2.9, 2, 0.8), cex=0.7, mgp=c(2,0.6,0))
+png("BM_PB_NSG_kinetics.png", width=(17.4*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
+par(mfrow=c(2,4), mar=c(3.2, 2.9, 2, 0.8), cex=0.7, mgp=c(2,0.6,0))
 
 # BM
 stars <- BMstars
 KineticsPlot2(BM, lineage="CD45.Percent",    ylab=BMylab, ylim=c(1, 100), xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45", sig=2)
 KineticsPlot2(BM, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM", sig=2)
 KineticsPlot2(BM, lineage="CD19.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid", sig=2)
 KineticsPlot2(BM, lineage="GPA.Percent",     ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA")
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA", sig=2)
 # PB
 stars <- PBstars
 KineticsPlot2(PB, lineage="CD45",      ylab=PBylab, ylim=c(1, 1000), xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45", sig=3)
 KineticsPlot2(PB, lineage="CD33.15",   ylab=PBylab, ylim=c(1, 1000), xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM", sig=3)
 KineticsPlot2(PB, lineage="CD19",      ylab=PBylab, ylim=c(1, 1000), xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid", sig=3)
 KineticsPlot2(PB, lineage="Platelets", ylab=PBylab, ylim=c(30, 10000), xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets")
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets", sig=4)
 dev.off()
 
 
