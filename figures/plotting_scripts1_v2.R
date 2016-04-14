@@ -325,6 +325,34 @@ levels(PB$Irradiation.Dose)[levels(PB$Irradiation.Dose)=="800 Rad"] <- "Irradiat
 levels(PB$Irradiation.Dose)[levels(PB$Irradiation.Dose)=="315 Rad"] <- "Irradiated" 
 levels(PB$Irradiation.Dose)[levels(PB$Irradiation.Dose)=="900 Rad"] <- "Irradiated"
 
+dat <- BM
+dat[8:ncol(dat)] <- log10(BM[8:ncol(dat)])
+weeks <- c(3,6,10,20)
+lineages <- names(dat[8:11])
+out <- NULL
+for (l in lineages){
+  lin <- NULL
+  for (w in weeks){
+    tmp <- (t.test(dat[dat$Strain=="NSG" & dat$Week==w, l], 
+                   dat[dat$Strain=="NRG" & dat$Week==w, l], var.equal = FALSE))
+    lin <- c(lin, tmp$p.value)
+  }
+  print(lin)
+  out <- cbind(out, lin) 
+}
+colnames(out) <- lineages
+rownames(out) <- weeks
+BMpvals <- out
+
+# Make matching table with significance asterisks. 
+tmp <- out
+tmp[tmp <= 0.001] <- "***"
+tmp[tmp <= 0.01]  <- "**"
+tmp[tmp <= 0.05]  <- "*"
+tmp[tmp <= 0.10]  <- "."
+tmp[tmp >  0.10]  <- "ns"
+
+
 # Kinetics plots
 # Function for NSG verus NRG plots:
 KineticsPlot2 <- function(dataframe, lineage="CD45.Percent", ylab, ylim, xlim=c(2,31), 
@@ -337,9 +365,9 @@ KineticsPlot2 <- function(dataframe, lineage="CD45.Percent", ylab, ylim, xlim=c(
   tmp[9] <- log10(tmp[9])
   tmp <- tmp[tmp$variable==lineage, ]
   tmp <- dplyr::summarise(group_by(tmp, Week, Strain, variable), mean=mean(value, na.rm=TRUE), se=se(value))
-  print(tmp)
   plot(tmp$mean ~ tmp$Week, type="n", axes=F,  ylim=log10(ylim), xlim=xlim, col=tmp$Strain,
        xlab="weeks post-transplant", ylab=ylab, mgp=c(axtitledist,0.5,0))
+  text(x = unique(tmp$Week), y = 2+pdist, labels=stars[ ,lineage] , cex=0.7) #paste("p=",round(PLT$p.value,2))
   sep1 <- tmp[tmp$Strain=="NRG", ]
   sep1$Week <- sep1$Week + (vAdj/1)
   sep2 <- tmp[tmp$Strain=="NSG", ]
@@ -358,19 +386,22 @@ KineticsPlot2 <- function(dataframe, lineage="CD45.Percent", ylab, ylim, xlim=c(
        labels=c(expression(10^-2), expression(10^-1),expression(10^0),expression(10^1),
                 expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
   title(main=title, line=0.5)
-  #text(x = bp, y = GM$mean+GM$se+pdist, labels=GM$star , cex=0.7) #paste("p=",round(PLT$p.value,2))
   box()
 }
+KineticsPlot2(BM, lineage="GPA.Percent",    ylab=BMylab, ylim=c(1, 100), xlim=xlim, 
+              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA")
 
 xlim <- c(1.5, 20.5)   # X-axis range
 lcols <- c("#000000","#CD0000")  # line colors
 lty <- 1    # linetype (1=solid, 2=dash, 3=dotted)
 pchs1 <- c(16,1)
+pdist <- 0.0
 
 #png("BM_PB_NSG_kinetics.png", width=(17.4*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
 #par(mfrow=c(2,4), mar=c(3.2, 2.9, 2, 0.8), cex=0.7, mgp=c(2,0.6,0))
 
 # BM
+stars <- BMstars
 KineticsPlot2(BM, lineage="CD45.Percent",    ylab=BMylab, ylim=c(1, 100), xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
 KineticsPlot2(BM, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
@@ -380,6 +411,7 @@ KineticsPlot2(BM, lineage="CD19.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xli
 KineticsPlot2(BM, lineage="GPA.Percent",     ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA")
 # PB
+stars <- PBstars
 KineticsPlot2(PB, lineage="CD45",      ylab=PBylab, ylim=c(1, 1000), xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
 KineticsPlot2(PB, lineage="CD33.15",   ylab=PBylab, ylim=c(1, 1000), xlim=xlim, 
@@ -390,68 +422,10 @@ KineticsPlot2(PB, lineage="Platelets", ylab=PBylab, ylim=c(30, 10000), xlim=xlim
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets")
 dev.off()
 
-mean(dat[dat$Strain=="NSG" & dat$Week==20, 11], na.rm=TRUE)
-
-
-
-The p.values dont seem to match the plots. Either the plots or the stats are wrong?
-# Statistics
-# T.Test
-dat <- log10(BM)
-weeks <- c(3,6,10,20)
-lineages <- names(dat[8:11])
-out <- NULL
-for (l in lineages){
-  lin <- NULL
-  for (w in weeks){
-    tmp <- (t.test(dat[dat$Strain=="NSG" & dat$Week==w, l], 
-                   dat[dat$Strain=="NRG" & dat$Week==w, l], var.equal = FALSE))
-    lin <- c(lin, tmp$p.value)
-  }
- print(lin)
- out <- cbind(out, lin) 
-}
-colnames(out) <- lineages
-rownames(out) <- weeks
-print(out)
-#out <-cbind(out, tmp$p.value)
-
-#  tmp <- c(i, tmp$p.value)
-#  datS2 <- rbind(datS2, tmp)
-print(out)
-
-t.test(dat[dat$Strain=="NSG" & dat$Week==3, 11], 
-        dat[dat$Strain=="NRG" & dat$Week==3, 11],var.equal = FALSE)
-
-
-for (w in weeks){
-  tmp <- (t.test(dat[dat$Strain=="NSG" & dat$Week==w, lineages[1]], 
-                 dat[dat$Strain=="NRG" & dat$Week==w, lineages[1]],var.equal = FALSE))
-  out <- c(out, tmp$p.value)
-}
-print(out)
 
 
 
 
-datS2 <- data.frame(datS2)
-#datS2[, 2] <- as.numeric(levels(datS2[,2]))[datS2[,2]]
-
-# Add columns for asterisks. (Symbol meanings: . <= 0.10; * <= 0.05; ** <= 0.01; *** <= 0.001)
-for (i in 1:nrow(datS2)){
-  if (datS2[i, 2] <= 0.001){
-    datS2[i ,3] <- "***"
-  } else if (datS2[i, 2] <= 0.01){
-    datS2[i ,3] <- "**"
-  } else if (datS2[i, 2] <= 0.05){
-    datS2[i ,3] <- "*"
-  } else if (datS2[i, 2] <= 0.10){
-    datS2[i ,3] <- "."
-  } else{
-    datS2[i ,3] <- ""
-  }
-}
-colnames(datS2) <- c("time", "p.value", "star")		
 
 
 
