@@ -293,6 +293,7 @@ dev.off()
 
 
 
+
 ##### NSG versus NRG #####
 ##### BM #####
 
@@ -325,10 +326,12 @@ levels(PB$Irradiation.Dose)[levels(PB$Irradiation.Dose)=="800 Rad"] <- "Irradiat
 levels(PB$Irradiation.Dose)[levels(PB$Irradiation.Dose)=="315 Rad"] <- "Irradiated" 
 levels(PB$Irradiation.Dose)[levels(PB$Irradiation.Dose)=="900 Rad"] <- "Irradiated"
 
+#Statistics
 dat <- BM
 dat[8:ncol(dat)] <- log10(BM[8:ncol(dat)])
 weeks <- c(3,6,10,20)
-lineages <- names(dat[8:11])
+lineages <- names(dat[8:ncol(dat)])
+lineages <- lineages[c(1:4, 6)]
 out <- NULL
 for (l in lineages){
   lin <- NULL
@@ -337,21 +340,51 @@ for (l in lineages){
                    dat[dat$Strain=="NRG" & dat$Week==w, l], var.equal = FALSE))
     lin <- c(lin, tmp$p.value)
   }
-  print(lin)
   out <- cbind(out, lin) 
 }
 colnames(out) <- lineages
 rownames(out) <- weeks
 BMpvals <- out
+tmp <- out  # Make matching table with significance asterisks. 
+tmp[tmp<=0.001]            <- "***"
+tmp[tmp<=0.01 & tmp>0.001] <- "**"
+tmp[tmp<=0.05 & tmp>0.01]  <- "*"
+tmp[tmp<=0.10 & tmp>0.05]  <- "."
+tmp[tmp> 0.10]             <- "ns"
+BMstars <- tmp
 
-# Make matching table with significance asterisks. 
-tmp <- out
-tmp[tmp <= 0.001] <- "***"
-tmp[tmp <= 0.01]  <- "**"
-tmp[tmp <= 0.05]  <- "*"
-tmp[tmp <= 0.10]  <- "."
-tmp[tmp >  0.10]  <- "ns"
+dat <- PB
+dat[8:ncol(dat)] <- log10(PB[8:ncol(dat)])
+weeks <- c(3,6,10,20)
+lineages <- names(dat[8:ncol(dat)])
+lineages <- lineages[c(1:3, 5)]
+out <- NULL
+for (l in lineages){
+  lin <- NULL
+  for (w in weeks){
+    tmp <- (t.test(dat[dat$Strain=="NSG" & dat$Week==w, l], 
+                   dat[dat$Strain=="NRG" & dat$Week==w, l], var.equal = FALSE))
+    lin <- c(lin, tmp$p.value)
+  }
+  out <- cbind(out, lin) 
+}
+colnames(out) <- lineages
+rownames(out) <- weeks
+PBpvals <- out
+tmp <- out  # Make matching table with significance asterisks. 
+tmp[tmp<=0.001]            <- "***"
+tmp[tmp<=0.01 & tmp>0.001] <- "**"
+tmp[tmp<=0.05 & tmp>0.01]  <- "*"
+tmp[tmp<=0.10 & tmp>0.05]  <- "."
+tmp[tmp> 0.10]             <- "ns"
+PBstars <- tmp
 
+# Do a separate t.test for PB CD19 w3 to check things
+tmp <- PB[PB$Week==3 ,c(3,10)]
+tmp[,2] <- log10(tmp[,2])
+NSG <- tmp[tmp$Strain=="NSG", 2]
+NRG <- tmp[tmp$Strain=="NRG", 2]
+t.test(NSG, NRG, var.equal = FALSE)
 
 # Kinetics plots
 # Function for NSG verus NRG plots:
@@ -367,7 +400,7 @@ KineticsPlot2 <- function(dataframe, lineage="CD45.Percent", ylab, ylim, xlim=c(
   tmp <- dplyr::summarise(group_by(tmp, Week, Strain, variable), mean=mean(value, na.rm=TRUE), se=se(value))
   plot(tmp$mean ~ tmp$Week, type="n", axes=F,  ylim=log10(ylim), xlim=xlim, col=tmp$Strain,
        xlab="weeks post-transplant", ylab=ylab, mgp=c(axtitledist,0.5,0))
-  text(x = unique(tmp$Week), y = sig, labels=stars[ ,lineage] , cex=0.9) #paste("p=",round(PLT$p.value,2))
+  text(x = unique(tmp$Week), y=sig, labels=stars[ ,lineage] , cex=0.9) #paste("p=",round(PLT$p.value,2))
   sep1 <- tmp[tmp$Strain=="NRG", ]
   sep1$Week <- sep1$Week + (vAdj/1)
   sep2 <- tmp[tmp$Strain=="NSG", ]
