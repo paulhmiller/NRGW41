@@ -27,6 +27,7 @@ pchs1 <- c(17,16)
 BMylab <- "% total BM cells"
 PBylab <- expression(paste(cells~x~10^3,"/mL"))
 cols3 <- c("#ee7700","#3333ff")  # colours for bar plots
+cols4 <- c("orange","yellow")  # colours for bar plots
 xlim <- c(1.5, 30.5)   # X-axis range on line plots
 lcols <- c("#000000","#CD0000")  # line colors
 lty <- 1    # linetype (1=solid, 2=dash, 3=dotted)
@@ -465,29 +466,44 @@ dev.off()
 
 
 
-
 ##### Old Age #####
 ##### BM #####
+tmp <- read.csv("../old_age/OldAge1_BM.csv", strip.white=TRUE)  #, colClasses=c(Mouse="character"))
+Exp <- rep("OldAge1", nrow(tmp))
+tmp <- cbind(Exp, tmp)
+BM1 <- tmp[c(1,6, 7:11, 22:27)]
 
-BM <- read.csv("../old_age/OldAge2_150504.csv", strip.white=TRUE)  #, colClasses=c(Mouse="character"))
-Exp <- rep("OldAge2", nrow(BM))
-BM <- cbind(Exp, BM)
-BM <- BM[c(1,6, 7:11, 22:27)]
+tmp <- read.csv("../old_age/OldAge2_BM.csv", strip.white=TRUE)  #, colClasses=c(Mouse="character"))
+Exp <- rep("OldAge2", nrow(tmp))
+tmp <- cbind(Exp, tmp)
+BM2 <- tmp[c(1,6, 7:11, 22:27)]
+
 # Adjust time-points so that BMa can be pooled:
-BM$Week <- round(BM$Week, digits=0)
-BM$Week[BM$Week==21] <- 20
-BM$Week[BM$Week==25] <- 20
+BM2$Week <- round(BM2$Week, digits=0)
+BM2$Week[BM2$Week==21] <- 20
+BM2$Week[BM2$Week==25] <- 20
+
+
+# Merge experiment 1 & 2:
+BM <- rbind(BM1, BM2)
+
+# Make codes the same:
+BM$Age[BM$Age=="O"] <- "Old"
+BM$Age[BM$Age=="Y"] <- "Young"
+BM <- droplevels(BM)
+
 # Change low values in leukocyte columns to detection threshold
 BM[,8:13][BM[,8:13] < 0.01] <- 0.01  
 
 # Select Data
 BM34 <- BM[BM$Cell.type=="CD34+" ,]
-BM49f <- BM[BM$Cell.type=="50 49f+" ,]
-
+BM49f50 <- BM[BM$Cell.type=="50 49f+" ,]
+BM49f60 <- BM[BM$Cell.type=="60 49f+" ,]
+BM49f <- rbind(BM49f50, BM49f60)
 
 # Function for Gaby M versus F barplot
 GroupBarplot2 <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="black", title){
-  #  Makes a grouped barplot, with strains plotted together and sexes separated.
+  #  Makes a grouped barplot, time-points plotted together and sexes separated.
   #  Takes plot title, name of dataframe, time-point to plot, and column number 
   #  that contains the values to plot. 
   tmp <- dataframe[dataframe$Week==week, ]  
@@ -518,13 +534,15 @@ GroupBarplot2 <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="b
 }
 #legend(locator(1),rownames(dat),fill=c("#ee7700","#3333ff"))
 
+
 #pdf(file="./week20.pdf", width=11.5/2.54, height=8/2.54) #, family='Calibri')
 png("Gaby1_MF.png", width=(3/4)*(11.5*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=10)
 par(mfrow=c(2,3), mar=c(2.1, 3.5, 2.1, 1.1), cex=0.7, mgp=c(2,0.6,0))
 axtitledist <- 1.6  # adjusts distance of x and y axis titles on kinetics plots
+
 # BM
 # CD34
-weeks <- c(20, 46)
+weeks <- c(20)
 GroupBarplot2(BM34, week=weeks, valueCol=8,  cols=cols3, ylab=BMylab, ylim=c(1, 100), title="CD45")
 GroupBarplot2(BM34, week=weeks, valueCol=9,  cols=cols3, ylab=BMylab, ylim=c(1, 100), title="GM")
 GroupBarplot2(BM34, week=weeks, valueCol=10, cols=cols3, ylab=BMylab, ylim=c(1, 100), title="B Lymphoid")
@@ -534,6 +552,67 @@ GroupBarplot2(BM49f, week=weeks, valueCol=8,  cols=cols3, ylab=BMylab, ylim=c(0.
 GroupBarplot2(BM49f, week=weeks, valueCol=9,  cols=cols3, ylab=BMylab, ylim=c(0.01, 100), title="GM")
 GroupBarplot2(BM49f, week=weeks, valueCol=10, cols=cols3, ylab=BMylab, ylim=c(0.01, 100), title="B Lymphoid")
 dev.off()
+
+
+
+
+# Function for Gaby Young versus Old
+GroupBarplot3 <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="black", title){
+  #  Makes a grouped barplot, time-points plotted together and sexes separated.
+  #  Takes plot title, name of dataframe, time-point to plot, and column number 
+  #  that contains the values to plot. 
+  tmp <- dataframe[dataframe$Week==week, ]  
+  if(ncol(tmp)==13){
+    tmp[8:13] <- log10(tmp[8:13])
+  } else if(ncol(tmp)==12){
+    tmp[8:12] <- log10(tmp[8:12])
+  } else {
+    stop("error: function only handles 13 (for BM) or 12 (for PB) columns")
+  }
+  means <- tapply(tmp[, valueCol], list(tmp$Age, tmp$Week), mean, na.rm=TRUE)
+  print(means)
+  means <- means+5 # this is to enable subzero plotting on log transformed data
+  SEMs <- tapply(tmp[, valueCol], list(tmp$Age, tmp$Week), se)
+  bp <- barplot(means, beside=T, yaxt="n", col=cols, ylim=5+log10(ylim), 
+                xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
+  magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+  par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
+  barplot(means, beside=T, yaxt="n", col=cols, ylim=5+log10(ylim), 
+          xlab="", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+  par(new=FALSE)
+  axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
+       labels=c(expression(10^-2), expression(10^-1),expression(10^0),
+                expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+  title(main=title, line=0.5)
+  arrows(bp, means+SEMs, bp, means, lwd = 1.5, angle = 90, code = 3, length = 0.05)
+  #text(x = bp, y = GM$mean+GM$se+pdist, labels=GM$star , cex=0.7) #paste("p=",round(PLT$p.value,2))
+  box()
+}
+#legend(locator(1),rownames(dat),fill=c("#ee7700","#3333ff"))
+
+
+png("Gaby1_OY.png", width=(3/4)*(11.5*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=10)
+par(mfrow=c(2,3), mar=c(2.1, 3.5, 2.1, 1.1), cex=0.7, mgp=c(2,0.6,0))
+axtitledist <- 1.6  # adjusts distance of x and y axis titles on kinetics plots
+
+# BM
+# CD34
+weeks <- c(20)
+GroupBarplot3(BM34, week=weeks, valueCol=8,  cols=cols4, ylab=BMylab, ylim=c(1, 100), title="CD45")
+GroupBarplot3(BM34, week=weeks, valueCol=9,  cols=cols4, ylab=BMylab, ylim=c(1, 100), title="GM")
+GroupBarplot3(BM34, week=weeks, valueCol=10, cols=cols4, ylab=BMylab, ylim=c(1, 100), title="B Lymphoid")
+# CD49f
+weeks <- c(20, 46)
+GroupBarplot3(BM49f, week=weeks, valueCol=8,  cols=cols4, ylab=BMylab, ylim=c(0.01, 100), title="CD45")
+GroupBarplot3(BM49f, week=weeks, valueCol=9,  cols=cols4, ylab=BMylab, ylim=c(0.01, 100), title="GM")
+GroupBarplot3(BM49f, week=weeks, valueCol=10, cols=cols4, ylab=BMylab, ylim=c(0.01, 100), title="B Lymphoid")
+dev.off()
+
+
+
+
+
+
 
 
 
