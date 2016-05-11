@@ -28,6 +28,7 @@ BMylab <- "% total BM cells"
 PBylab <- expression(paste(cells~x~10^3,"/mL"))
 cols3 <- c("#ee7700","#3333ff")  # colours for bar plots
 cols4 <- c("orange","yellow")  # colours for bar plots
+cols5 <- c("purple","green")  # colours for bar plots 
 xlim <- c(1.5, 30.5)   # X-axis range on line plots
 lcols <- c("#000000","#CD0000")  # line colors
 lty <- 1    # linetype (1=solid, 2=dash, 3=dotted)
@@ -490,7 +491,10 @@ BM <- rbind(BM1, BM2)
 # Make codes the same:
 BM$Age[BM$Age=="O"] <- "Old"
 BM$Age[BM$Age=="Y"] <- "Young"
+BM$Carriers[BM$Carriers=="N"] <- "no"
+BM$Carriers[BM$Carriers=="Y"] <- "yes"
 BM <- droplevels(BM)
+
 
 # Change low values in leukocyte columns to detection threshold
 BM[,8:13][BM[,8:13] < 0.01] <- 0.01  
@@ -570,7 +574,6 @@ GroupBarplot3 <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="b
     stop("error: function only handles 13 (for BM) or 12 (for PB) columns")
   }
   means <- tapply(tmp[, valueCol], list(tmp$Age, tmp$Week), mean, na.rm=TRUE)
-  print(means)
   means <- means+5 # this is to enable subzero plotting on log transformed data
   SEMs <- tapply(tmp[, valueCol], list(tmp$Age, tmp$Week), se)
   bp <- barplot(means, beside=T, yaxt="n", col=cols, ylim=5+log10(ylim), 
@@ -610,11 +613,64 @@ dev.off()
 
 
 
+# Function for Gaby carriers
+GroupBarplot4 <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="black", title){
+  #  Makes a grouped barplot, time-points plotted together and sexes separated.
+  #  Takes plot title, name of dataframe, time-point to plot, and column number 
+  #  that contains the values to plot. 
+  tmp <- dataframe[dataframe$Week==week, ]  
+  if(ncol(tmp)==13){
+    tmp[8:13] <- log10(tmp[8:13])
+  } else if(ncol(tmp)==12){
+    tmp[8:12] <- log10(tmp[8:12])
+  } else {
+    stop("error: function only handles 13 (for BM) or 12 (for PB) columns")
+  }
+  means <- tapply(tmp[, valueCol], list(tmp$Carriers, tmp$Week), mean, na.rm=TRUE)
+  means <- means+5 # this is to enable subzero plotting on log transformed data
+  SEMs <- tapply(tmp[, valueCol], list(tmp$Carriers, tmp$Week), se)
+  bp <- barplot(means, beside=T, yaxt="n", col=cols, ylim=5+log10(ylim), 
+                xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
+  magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+  par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
+  barplot(means, beside=T, yaxt="n", col=cols, ylim=5+log10(ylim), 
+          xlab="", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+  par(new=FALSE)
+  axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
+       labels=c(expression(10^-2), expression(10^-1),expression(10^0),
+                expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+  title(main=title, line=0.5)
+  arrows(bp, means+SEMs, bp, means, lwd = 1.5, angle = 90, code = 3, length = 0.05)
+  #text(x = bp, y = GM$mean+GM$se+pdist, labels=GM$star , cex=0.7) #paste("p=",round(PLT$p.value,2))
+  box()
+}
+#legend(locator(1),rownames(dat),fill=c("#ee7700","#3333ff"))
+
+
+png("Gaby1_carriers.png", width=(3/4)*(11.5*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=10)
+par(mfrow=c(2,3), mar=c(2.1, 3.5, 2.1, 1.1), cex=0.7, mgp=c(2,0.6,0))
+axtitledist <- 1.6  # adjusts distance of x and y axis titles on kinetics plots
+
+# BM
+# CD34
+weeks <- c(20)
+GroupBarplot4(BM34, week=weeks, valueCol=8,  cols=cols5, ylab=BMylab, ylim=c(1, 100), title="CD45")
+GroupBarplot4(BM34, week=weeks, valueCol=9,  cols=cols5, ylab=BMylab, ylim=c(1, 100), title="GM")
+GroupBarplot4(BM34, week=weeks, valueCol=10, cols=cols5, ylab=BMylab, ylim=c(1, 100), title="B Lymphoid")
+# CD49f
+weeks <- c(20, 46)
+GroupBarplot4(BM49f, week=weeks, valueCol=8,  cols=cols5, ylab=BMylab, ylim=c(0.01, 100), title="CD45")
+GroupBarplot4(BM49f, week=weeks, valueCol=9,  cols=cols5, ylab=BMylab, ylim=c(0.01, 100), title="GM")
+GroupBarplot4(BM49f, week=weeks, valueCol=10, cols=cols5, ylab=BMylab, ylim=c(0.01, 100), title="B Lymphoid")
+dev.off()
 
 
 
 
 
+
+
+# Below is unused (so far)
 
 # Kinetics plots
 xlim <- c(1.5, 46.5)   # X-axis range
