@@ -187,7 +187,7 @@ png("BM_PB_female_irrad_kinetics.png", width=(17.4*ppi)/2.54, height=(8*ppi)/2.5
 par(mfrow=c(2,4), mar=c(3.2, 2.9, 2, 0.8), cex=0.7, mgp=c(2,0.6,0))
 
 # BMi
-tmp <- BM[BM$Irradiation.Dose=="Irradiated" ,]
+tmp <- BM[BM$Irradiation.Dose=="Irradiated" & BM$Sex=="F",]
 KineticsPlot1(tmp, lineage="CD45.Percent",    ylab=BMylab, ylim=c(0.1, 100), xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
 KineticsPlot1(tmp, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
@@ -197,7 +197,7 @@ KineticsPlot1(tmp, lineage="CD19.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xl
 KineticsPlot1(tmp, lineage="GPA.Percent",     ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA")
 # PBi
-tmp <- PB[PB$Irradiation.Dose=="Irradiated" ,]
+tmp <- PB[PB$Irradiation.Dose=="Irradiated" & PB$Sex=="F",]
 KineticsPlot1(tmp, lineage="CD45",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
 KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
@@ -210,11 +210,11 @@ dev.off()
 
 
 
-png("BM_PB_nonirrad_kinetics.png", width=(17.4*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
+png("BM_PB_female_nonirrad_kinetics.png", width=(17.4*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
 par(mfrow=c(2,4), mar=c(3.2, 2.9, 2, 0.8), cex=0.7, mgp=c(2,0.6,0))
 
 # BMni
-tmp <- BM[BM$Irradiation.Dose=="Non-irradiated" ,]
+tmp <- BM[BM$Irradiation.Dose=="Non-irradiated"  & BM$Sex=="F",]
 KineticsPlot1(tmp, lineage="CD45.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
 KineticsPlot1(tmp, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
@@ -224,7 +224,7 @@ KineticsPlot1(tmp, lineage="CD19.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xl
 KineticsPlot1(tmp, lineage="GPA.Percent",     ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA")
 # PBni
-tmp <- PB[PB$Irradiation.Dose=="Non-irradiated" ,]
+tmp <- PB[PB$Irradiation.Dose=="Non-irradiated"  & PB$Sex=="F",]
 KineticsPlot1(tmp, lineage="CD45",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
 KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
@@ -235,6 +235,58 @@ KineticsPlot1(tmp, lineage="Platelets", ylab=PBylab, ylim=c(30, 10000), xlim=xli
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets")
 dev.off()
 
+
+png("BM_PB_male_irrad_kinetics.png", width=(17.4*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
+par(mfrow=c(2,4), mar=c(3.2, 2.9, 2, 0.8), cex=0.7, mgp=c(2,0.6,0))
+
+# BMi
+tmp <- BM[BM$Irradiation.Dose=="Irradiated" & BM$Sex=="M",]
+KineticsPlot1(tmp, lineage="CD45.Percent",    ylab=BMylab, ylim=c(0.1, 100), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
+KineticsPlot1(tmp, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
+KineticsPlot1(tmp, lineage="CD19.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
+KineticsPlot1(tmp, lineage="GPA.Percent",     ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA")
+# PBi
+tmp <- PB[PB$Irradiation.Dose=="Irradiated" & PB$Sex=="M",]
+KineticsPlot1(tmp, lineage="CD45",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
+KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
+KineticsPlot1(tmp, lineage="CD19",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
+KineticsPlot1(tmp, lineage="Platelets", ylab=PBylab, ylim=c(30, 10000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets")
+dev.off()
+
+
+
+png("BM_PB_male_nonirrad_kinetics.png", width=(17.4*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
+par(mfrow=c(2,4), mar=c(3.2, 2.9, 2, 0.8), cex=0.7, mgp=c(2,0.6,0))
+
+# BMni
+tmp <- BM[BM$Irradiation.Dose=="Non-irradiated"  & BM$Sex=="M",]
+KineticsPlot1(tmp, lineage="CD45.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
+KineticsPlot1(tmp, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
+KineticsPlot1(tmp, lineage="CD19.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
+KineticsPlot1(tmp, lineage="GPA.Percent",     ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA")
+# PBni
+tmp <- PB[PB$Irradiation.Dose=="Non-irradiated"  & PB$Sex=="M",]
+KineticsPlot1(tmp, lineage="CD45",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
+KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
+KineticsPlot1(tmp, lineage="CD19",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
+KineticsPlot1(tmp, lineage="Platelets", ylab=PBylab, ylim=c(30, 10000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets")
+dev.off()
 
 
 
@@ -500,6 +552,7 @@ levels(BM$Age)[levels(BM$Age)=="Young"] <- "young"
 BM$Carriers[BM$Carriers=="N"] <- "no"
 BM$Carriers[BM$Carriers=="Y"] <- "yes"
 BM <- droplevels(BM)
+# Chnange factor levels:
 
 
 # Change low values in leukocyte columns to detection threshold
@@ -525,16 +578,16 @@ GroupBarplot2 <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="b
   } else {
     stop("error: function only handles 13 (for BM) or 12 (for PB) columns")
   }
-  means <- tapply(tmp[, valueCol], list(tmp$Sex, tmp$Age), mean, na.rm=TRUE)
+  means <- tapply(tmp[, valueCol], list(tmp$Age, tmp$Sex), mean, na.rm=TRUE)
   print(means)
   means <- means+5 # this is to enable subzero plotting on log transformed data
-  SEMs <- tapply(tmp[, valueCol], list(tmp$Sex, tmp$Age), se)
+  SEMs <- tapply(tmp[, valueCol], list(tmp$Age, tmp$Sex), se)
   bp <- barplot(means, beside=T, yaxt="n", col=cols, ylim=5+log10(ylim), 
                 xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
   magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
   par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
   barplot(means, beside=T, yaxt="n", col=cols, ylim=5+log10(ylim), 
-          xlab="recipient age", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+          xlab="recipient sex", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
   par(new=FALSE)
   axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
        labels=c(expression(10^-2), expression(10^-1),expression(10^0),
@@ -560,15 +613,15 @@ GroupBarplot4 <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="b
   } else {
     stop("error: function only handles 13 (for BM) or 12 (for PB) columns")
   }
-  means <- tapply(tmp[, valueCol], list(tmp$Sex, tmp$Carriers), mean, na.rm=TRUE)
+  means <- tapply(tmp[, valueCol], list(tmp$Carriers, tmp$Sex), mean, na.rm=TRUE)
   means <- means+5 # this is to enable subzero plotting on log transformed data
-  SEMs <- tapply(tmp[, valueCol], list(tmp$Sex, tmp$Carriers), se)
+  SEMs <- tapply(tmp[, valueCol], list(tmp$Carriers, tmp$Sex), se)
   bp <- barplot(means, beside=T, yaxt="n", col=cols, ylim=5+log10(ylim), 
                 xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
   magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
   par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
   barplot(means, beside=T, yaxt="n", col=cols, ylim=5+log10(ylim), 
-          xlab="carrier cells", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+          xlab="recipient sex", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
   par(new=FALSE)
   axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
        labels=c(expression(10^-2), expression(10^-1),expression(10^0),
@@ -582,7 +635,7 @@ GroupBarplot4 <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="b
 #legend(locator(1),rownames(dat),fill=c("#ee7700","#3333ff"))
 
 #pdf(file="./week20.pdf", width=11.5/2.54, height=8/2.54) #, family='Calibri')
-png("Gaby2.png", width=(3/4)*(11.5*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=10)
+png("Gaby3.png", width=(3/4)*(11.5*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=10)
 par(mfrow=c(2,3), mar=c(2.6, 3.0, 2.1, 0.8), cex=0.7, mgp=c(2,0.6,0))
 axtitledist <- 1.6  # adjusts distance of x and y axis titles 
 # BM
