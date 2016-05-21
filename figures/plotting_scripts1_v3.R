@@ -2,6 +2,9 @@
 # Scripts to Make Figures for Mouse Chimerism Data
 # Paul Miller [paulhmiller@gmail.com]
 
+## info:
+# Elsevier: 1 column, 90 mm; 1.5 column, 140 mm; and 2 column, 190 mm (the full width of the page)
+# Blood: 1 column, 80 mm; 1.5 column, 115 mm
 
 .pardefault <- par(no.readonly=T)  # Stores current par settings
 par(.pardefault)  # Reloads stored par settings
@@ -183,10 +186,13 @@ lcols <- c("#000000","#CD0000")  # line colors
 lty <- 1    # linetype (1=solid, 2=dash, 3=dotted)
 vAdj <- 0.0  # Jitter-like effect, use values between 0-2
 
-png("BM_PB_female_irrad_kinetics.png", width=(17.4*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
-par(mfrow=c(2,4), mar=c(3.2, 2.9, 2, 0.8), cex=0.7, mgp=c(2,0.6,0))
 
-# BMi
+
+
+# BM
+png("figX_W41_BM_kinetics_1.5col.png", width=(14.0*ppi)/2.54, height=(16*ppi)/2.54, res=ppi, pointsize=8)
+par(mfcol=c(4,4), mar=c(3.2, 2.9, 2, 0.8), cex=0.7, mgp=c(2,0.6,0))
+# f, i
 tmp <- BM[BM$Irradiation.Dose=="Irradiated" & BM$Sex=="F",]
 KineticsPlot1(tmp, lineage="CD45.Percent",    ylab=BMylab, ylim=c(0.1, 100), xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
@@ -196,50 +202,7 @@ KineticsPlot1(tmp, lineage="CD19.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xl
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
 KineticsPlot1(tmp, lineage="GPA.Percent",     ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA")
-# PBi
-tmp <- PB[PB$Irradiation.Dose=="Irradiated" & PB$Sex=="F",]
-KineticsPlot1(tmp, lineage="CD45",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
-KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
-KineticsPlot1(tmp, lineage="CD19",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
-KineticsPlot1(tmp, lineage="Platelets", ylab=PBylab, ylim=c(30, 10000), xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets")
-dev.off()
-
-
-
-png("BM_PB_female_nonirrad_kinetics.png", width=(17.4*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
-par(mfrow=c(2,4), mar=c(3.2, 2.9, 2, 0.8), cex=0.7, mgp=c(2,0.6,0))
-
-# BMni
-tmp <- BM[BM$Irradiation.Dose=="Non-irradiated"  & BM$Sex=="F",]
-KineticsPlot1(tmp, lineage="CD45.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
-KineticsPlot1(tmp, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
-KineticsPlot1(tmp, lineage="CD19.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
-KineticsPlot1(tmp, lineage="GPA.Percent",     ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA")
-# PBni
-tmp <- PB[PB$Irradiation.Dose=="Non-irradiated"  & PB$Sex=="F",]
-KineticsPlot1(tmp, lineage="CD45",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
-KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
-KineticsPlot1(tmp, lineage="CD19",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
-KineticsPlot1(tmp, lineage="Platelets", ylab=PBylab, ylim=c(30, 10000), xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets")
-dev.off()
-
-
-png("BM_PB_male_irrad_kinetics.png", width=(17.4*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
-par(mfrow=c(2,4), mar=c(3.2, 2.9, 2, 0.8), cex=0.7, mgp=c(2,0.6,0))
-
-# BMi
+# m, i
 tmp <- BM[BM$Irradiation.Dose=="Irradiated" & BM$Sex=="M",]
 KineticsPlot1(tmp, lineage="CD45.Percent",    ylab=BMylab, ylim=c(0.1, 100), xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
@@ -249,24 +212,17 @@ KineticsPlot1(tmp, lineage="CD19.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xl
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
 KineticsPlot1(tmp, lineage="GPA.Percent",     ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA")
-# PBi
-tmp <- PB[PB$Irradiation.Dose=="Irradiated" & PB$Sex=="M",]
-KineticsPlot1(tmp, lineage="CD45",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+# f, ni
+tmp <- BM[BM$Irradiation.Dose=="Non-irradiated"  & BM$Sex=="F",]
+KineticsPlot1(tmp, lineage="CD45.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
-KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+KineticsPlot1(tmp, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
-KineticsPlot1(tmp, lineage="CD19",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+KineticsPlot1(tmp, lineage="CD19.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
-KineticsPlot1(tmp, lineage="Platelets", ylab=PBylab, ylim=c(30, 10000), xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets")
-dev.off()
-
-
-
-png("BM_PB_male_nonirrad_kinetics.png", width=(17.4*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
-par(mfrow=c(2,4), mar=c(3.2, 2.9, 2, 0.8), cex=0.7, mgp=c(2,0.6,0))
-
-# BMni
+KineticsPlot1(tmp, lineage="GPA.Percent",     ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA")
+# m, ni
 tmp <- BM[BM$Irradiation.Dose=="Non-irradiated"  & BM$Sex=="M",]
 KineticsPlot1(tmp, lineage="CD45.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
@@ -276,7 +232,46 @@ KineticsPlot1(tmp, lineage="CD19.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xl
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
 KineticsPlot1(tmp, lineage="GPA.Percent",     ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA")
-# PBni
+dev.off()
+
+
+
+
+
+# PBi
+png("figX_W41_PB_kinetics_1.5col.png", width=(14.0*ppi)/2.54, height=(16*ppi)/2.54, res=ppi, pointsize=8)
+par(mfcol=c(4,4), mar=c(3.2, 2.9, 2, 0.8), cex=0.7, mgp=c(2,0.6,0))
+# f, i
+tmp <- PB[PB$Irradiation.Dose=="Irradiated" & PB$Sex=="F",]
+KineticsPlot1(tmp, lineage="CD45",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
+KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
+KineticsPlot1(tmp, lineage="CD19",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
+KineticsPlot1(tmp, lineage="Platelets", ylab=PBylab, ylim=c(30, 10000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets")
+# m, i
+tmp <- PB[PB$Irradiation.Dose=="Irradiated" & PB$Sex=="M",]
+KineticsPlot1(tmp, lineage="CD45",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
+KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
+KineticsPlot1(tmp, lineage="CD19",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
+KineticsPlot1(tmp, lineage="Platelets", ylab=PBylab, ylim=c(30, 10000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets")
+# f, ni
+tmp <- PB[PB$Irradiation.Dose=="Non-irradiated"  & PB$Sex=="F",]
+KineticsPlot1(tmp, lineage="CD45",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
+KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
+KineticsPlot1(tmp, lineage="CD19",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
+KineticsPlot1(tmp, lineage="Platelets", ylab=PBylab, ylim=c(30, 10000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets")
+# m ni
 tmp <- PB[PB$Irradiation.Dose=="Non-irradiated"  & PB$Sex=="M",]
 KineticsPlot1(tmp, lineage="CD45",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
@@ -287,6 +282,8 @@ KineticsPlot1(tmp, lineage="CD19",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xli
 KineticsPlot1(tmp, lineage="Platelets", ylab=PBylab, ylim=c(30, 10000), xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets")
 dev.off()
+
+
 
 
 
@@ -552,8 +549,9 @@ levels(BM$Age)[levels(BM$Age)=="Young"] <- "young"
 BM$Carriers[BM$Carriers=="N"] <- "no"
 BM$Carriers[BM$Carriers=="Y"] <- "yes"
 BM <- droplevels(BM)
-# Chnange factor levels:
-
+# reorder factor levels:
+BM$Age <- factor(BM$Age,levels(BM$Age)[c(2,1)])
+#print(levels(BM$Age))
 
 # Change low values in leukocyte columns to detection threshold
 BM[,8:13][BM[,8:13] < 0.01] <- 0.01  
