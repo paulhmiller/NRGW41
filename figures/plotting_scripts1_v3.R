@@ -20,7 +20,16 @@ setwd('C:/Users/paulm/CRC Paul/PROJECTS/NRGW41/figures')
 ## Functions
 # Std Error of the Mean (excludes NAs)
 se <- function(x) sd(x, na.rm=TRUE)/sqrt(length(x[!is.na(x)]))
-
+# Makes a table of significance stars from an input table of p-values
+p2stars <- function(table){
+    stars <- table
+    stars[stars<=0.001]              <- "***"
+    stars[stars<=0.01 & stars>0.001] <- "**"
+    stars[stars<=0.05 & stars>0.01]  <- "*"
+    stars[stars<=0.10 & stars>0.05]  <- "."
+    stars[stars> 0.10]               <- "ns"
+    return(stars)
+}
 
 
 # Global Plotting Parameters
@@ -131,9 +140,6 @@ levels(PB$Irradiation.Dose)[levels(PB$Irradiation.Dose)=="150 Rad"] <- "Irradiat
 levels(PB$Irradiation.Dose)[levels(PB$Irradiation.Dose)=="900 Rad"] <- "Irradiated"
 
 
-
-
-
 # Kinetics plots
 # Function for NRG verus NRG-W41 plots:
 KineticsPlot1 <- function(dataframe, lineage="CD45.Percent", ylab, ylim, xlim=c(2,31), 
@@ -148,6 +154,7 @@ KineticsPlot1 <- function(dataframe, lineage="CD45.Percent", ylab, ylim, xlim=c(
   tmp <- dplyr::summarise(group_by(tmp, Week, Strain, Sex, variable), mean=mean(value, na.rm=TRUE), se=se(value))
   plot(tmp$mean ~ tmp$Week, type="n", axes=F,  ylim=log10(ylim), xlim=xlim, col=tmp$Strain,
        xlab="weeks post-transplant", ylab=ylab, mgp=c(axtitledist,0.5,0))
+  text(x = weeks, y=sig, labels=stars[ ,lineage] , cex=0.9) #paste("p=",round(PLT$p.value,2))
   sep1 <- tmp[tmp$Strain=="NRG" & tmp$Sex=="M", ]
   sep1$Week <- sep1$Week + (vAdj/1)
   sep2 <- tmp[tmp$Strain=="NRG" & tmp$Sex=="F", ]
@@ -192,8 +199,31 @@ vAdj <- 0.0  # Jitter-like effect, use values between 0-2
 # BM
 png("figX_W41_BM_kinetics_1.5col.png", width=(14.0*ppi)/2.54, height=(16*ppi)/2.54, res=ppi, pointsize=8)
 par(mfcol=c(4,4), mar=c(3.2, 2.9, 2, 0.8), cex=0.7, mgp=c(2,0.6,0))
+sig <- 2
+
 # f, i
 tmp <- BM[BM$Irradiation.Dose=="Irradiated" & BM$Sex=="F",]
+# Statistics
+dat <- tmp
+dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
+weeks <- c(3,6,10,20,30)
+lineages <- names(dat[8:ncol(dat)])
+lineages <- lineages[c(1:4, 6)]
+out <- NULL
+for (l in lineages){
+  lin <- NULL
+  for (w in weeks){
+    tmp2 <- (t.test(dat[dat$Strain=="NRG" & dat$Week==w, l], 
+                   dat[dat$Strain=="NRG-W41" & dat$Week==w, l], var.equal = FALSE))
+    lin <- c(lin, tmp2$p.value)
+  }
+  out <- cbind(out, lin) 
+}
+colnames(out) <- lineages
+rownames(out) <- weeks
+print(out)
+stars <- p2stars(out)
+# Plots
 KineticsPlot1(tmp, lineage="CD45.Percent",    ylab=BMylab, ylim=c(0.1, 100), xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
 KineticsPlot1(tmp, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
@@ -202,8 +232,29 @@ KineticsPlot1(tmp, lineage="CD19.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xl
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
 KineticsPlot1(tmp, lineage="GPA.Percent",     ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA")
+
 # m, i
 tmp <- BM[BM$Irradiation.Dose=="Irradiated" & BM$Sex=="M",]
+# Statistics
+dat <- tmp
+dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
+weeks <- c(3,6,10,20,30)
+lineages <- names(dat[8:ncol(dat)])
+lineages <- lineages[c(1:4, 6)]
+out <- NULL
+for (l in lineages){
+  lin <- NULL
+  for (w in weeks){
+    tmp2 <- (t.test(dat[dat$Strain=="NRG" & dat$Week==w, l], 
+                   dat[dat$Strain=="NRG-W41" & dat$Week==w, l], var.equal = FALSE))
+    lin <- c(lin, tmp2$p.value)
+  }
+  out <- cbind(out, lin) 
+}
+colnames(out) <- lineages
+rownames(out) <- weeks
+stars <- p2stars(out)
+# Plots
 KineticsPlot1(tmp, lineage="CD45.Percent",    ylab=BMylab, ylim=c(0.1, 100), xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
 KineticsPlot1(tmp, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
@@ -212,8 +263,29 @@ KineticsPlot1(tmp, lineage="CD19.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xl
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
 KineticsPlot1(tmp, lineage="GPA.Percent",     ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA")
+
 # f, ni
 tmp <- BM[BM$Irradiation.Dose=="Non-irradiated"  & BM$Sex=="F",]
+# Statistics
+dat <- tmp
+dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
+weeks <- c(3,6,10,20)    #,30)
+lineages <- names(dat[8:ncol(dat)])
+lineages <- lineages[c(1:4, 6)]
+out <- NULL
+for (l in lineages){
+  lin <- NULL
+  for (w in weeks){
+    tmp2 <- (t.test(dat[dat$Strain=="NRG" & dat$Week==w, l], 
+                   dat[dat$Strain=="NRG-W41" & dat$Week==w, l], var.equal = FALSE))
+    lin <- c(lin, tmp2$p.value)
+  }
+  out <- cbind(out, lin) 
+}
+colnames(out) <- lineages
+rownames(out) <- weeks
+stars <- p2stars(out)
+# Plots
 KineticsPlot1(tmp, lineage="CD45.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
 KineticsPlot1(tmp, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
@@ -222,8 +294,29 @@ KineticsPlot1(tmp, lineage="CD19.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xl
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
 KineticsPlot1(tmp, lineage="GPA.Percent",     ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA")
+
 # m, ni
 tmp <- BM[BM$Irradiation.Dose=="Non-irradiated"  & BM$Sex=="M",]
+# Statistics
+dat <- tmp
+dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
+weeks <- c(3,6,10,20)   #,30)
+lineages <- names(dat[8:ncol(dat)])
+lineages <- lineages[c(1:4, 6)]
+out <- NULL
+for (l in lineages){
+  lin <- NULL
+  for (w in weeks){
+    tmp2 <- (t.test(dat[dat$Strain=="NRG" & dat$Week==w, l], 
+                   dat[dat$Strain=="NRG-W41" & dat$Week==w, l], var.equal = FALSE))
+    lin <- c(lin, tmp2$p.value)
+  }
+  out <- cbind(out, lin) 
+}
+colnames(out) <- lineages
+rownames(out) <- weeks
+stars <- p2stars(out)
+# Plots
 KineticsPlot1(tmp, lineage="CD45.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
 KineticsPlot1(tmp, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
@@ -482,7 +575,7 @@ lcols <- c("#000000","#CD0000")  # line colors
 lty <- 1    # linetype (1=solid, 2=dash, 3=dotted)
 pchs1 <- c(16,1)
 
-png("BM_PB_NSG_kinetics.png", width=(17.4*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
+png("figX_NSG_NRG_1col.png", width=(14.0*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
 par(mfrow=c(2,4), mar=c(3.2, 2.9, 2, 0.8), cex=0.7, mgp=c(2,0.6,0))
 
 # BM
