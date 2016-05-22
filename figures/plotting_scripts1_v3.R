@@ -27,7 +27,7 @@ p2stars <- function(table){
     stars[stars<=0.01 & stars>0.001] <- "**"
     stars[stars<=0.05 & stars>0.01]  <- "*"
     stars[stars<=0.10 & stars>0.05]  <- "."
-    stars[stars> 0.10]               <- "ns"
+    stars[stars> 0.10]               <- "-"
     return(stars)
 }
 
@@ -331,48 +331,144 @@ dev.off()
 
 
 
-# PBi
+# PB
 png("figX_W41_PB_kinetics_1.5col.png", width=(14.0*ppi)/2.54, height=(16*ppi)/2.54, res=ppi, pointsize=8)
 par(mfcol=c(4,4), mar=c(3.2, 2.9, 2, 0.8), cex=0.7, mgp=c(2,0.6,0))
+ylims1 <- c(0.3,1400)
+ylims2 <- c(30,12000)
+sig1 <- log10(1400)
+sig2 <- log10(12000)
+
 # f, i
 tmp <- PB[PB$Irradiation.Dose=="Irradiated" & PB$Sex=="F",]
-KineticsPlot1(tmp, lineage="CD45",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+## Statistics
+dat <- tmp
+dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
+weeks <- c(3,6,10,20,30)
+lineages <- names(dat[8:ncol(dat)])
+lineages <- lineages[c(1:3, 5)]
+out <- NULL
+for (l in lineages){
+  lin <- NULL
+  for (w in weeks){
+    tmp2 <- (t.test(dat[dat$Strain=="NRG" & dat$Week==w, l], 
+                   dat[dat$Strain=="NRG-W41" & dat$Week==w, l], var.equal = FALSE))
+    lin <- c(lin, tmp2$p.value)
+  }
+  out <- cbind(out, lin) 
+}
+colnames(out) <- lineages
+rownames(out) <- weeks
+stars <- p2stars(out)
+# Plots
+sig <- sig1
+KineticsPlot1(tmp, lineage="CD45",      ylab=PBylab, ylim=ylims1, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
-KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=ylims1, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
-KineticsPlot1(tmp, lineage="CD19",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+KineticsPlot1(tmp, lineage="CD19",      ylab=PBylab, ylim=ylims1, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
-KineticsPlot1(tmp, lineage="Platelets", ylab=PBylab, ylim=c(30, 10000), xlim=xlim, 
+sig <- sig2
+KineticsPlot1(tmp, lineage="Platelets", ylab=PBylab, ylim=ylims2, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets")
+
 # m, i
 tmp <- PB[PB$Irradiation.Dose=="Irradiated" & PB$Sex=="M",]
-KineticsPlot1(tmp, lineage="CD45",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+## Statistics
+dat <- tmp
+dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
+weeks <- c(3,6,10,20)  #,30)
+lineages <- names(dat[8:ncol(dat)])
+lineages <- lineages[c(1:3, 5)]
+out <- NULL
+for (l in lineages){
+  lin <- NULL
+  for (w in weeks){
+    tmp2 <- (t.test(dat[dat$Strain=="NRG" & dat$Week==w, l], 
+                   dat[dat$Strain=="NRG-W41" & dat$Week==w, l], var.equal = FALSE))
+    lin <- c(lin, tmp2$p.value)
+  }
+  out <- cbind(out, lin) 
+}
+colnames(out) <- lineages
+rownames(out) <- weeks
+stars <- p2stars(out)
+# Plots
+sig <- sig1
+KineticsPlot1(tmp, lineage="CD45",      ylab=PBylab, ylim=ylims1, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
-KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=ylims1, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
-KineticsPlot1(tmp, lineage="CD19",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+KineticsPlot1(tmp, lineage="CD19",      ylab=PBylab, ylim=ylims1, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
-KineticsPlot1(tmp, lineage="Platelets", ylab=PBylab, ylim=c(30, 10000), xlim=xlim, 
+sig <- sig2
+KineticsPlot1(tmp, lineage="Platelets", ylab=PBylab, ylim=ylims2, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets")
+
 # f, ni
 tmp <- PB[PB$Irradiation.Dose=="Non-irradiated"  & PB$Sex=="F",]
-KineticsPlot1(tmp, lineage="CD45",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+## Statistics
+dat <- tmp
+dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
+weeks <- c(10)   #3,6,10,20,30)
+lineages <- names(dat[8:ncol(dat)])
+lineages <- lineages[c(1:3, 5)]
+out <- NULL
+for (l in lineages){
+  lin <- NULL
+  for (w in weeks){
+    tmp2 <- (t.test(dat[dat$Strain=="NRG" & dat$Week==w, l], 
+                   dat[dat$Strain=="NRG-W41" & dat$Week==w, l], var.equal = FALSE))
+    lin <- c(lin, tmp2$p.value)
+  }
+  out <- cbind(out, lin) 
+}
+colnames(out) <- lineages
+rownames(out) <- weeks
+stars <- p2stars(out)
+# Plots
+sig <- sig1
+KineticsPlot1(tmp, lineage="CD45",      ylab=PBylab, ylim=ylims1, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
-KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=ylims1, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
-KineticsPlot1(tmp, lineage="CD19",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+KineticsPlot1(tmp, lineage="CD19",      ylab=PBylab, ylim=ylims1, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
-KineticsPlot1(tmp, lineage="Platelets", ylab=PBylab, ylim=c(30, 10000), xlim=xlim, 
+sig <- sig2
+KineticsPlot1(tmp, lineage="Platelets", ylab=PBylab, ylim=ylims2, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets")
+
 # m ni
 tmp <- PB[PB$Irradiation.Dose=="Non-irradiated"  & PB$Sex=="M",]
-KineticsPlot1(tmp, lineage="CD45",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+## Statistics
+dat <- tmp
+dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
+weeks <- c(10)   #3,6,10,20,30)
+lineages <- names(dat[8:ncol(dat)])
+lineages <- lineages[c(1:3, 5)]
+out <- NULL
+for (l in lineages){
+  lin <- NULL
+  for (w in weeks){
+    tmp2 <- (t.test(dat[dat$Strain=="NRG" & dat$Week==w, l], 
+                   dat[dat$Strain=="NRG-W41" & dat$Week==w, l], var.equal = FALSE))
+    lin <- c(lin, tmp2$p.value)
+  }
+  out <- cbind(out, lin) 
+}
+colnames(out) <- lineages
+rownames(out) <- weeks
+stars <- p2stars(out)
+# Plots
+sig <- sig1
+KineticsPlot1(tmp, lineage="CD45",      ylab=PBylab, ylim=ylims1, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
-KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=ylims1, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
-KineticsPlot1(tmp, lineage="CD19",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+KineticsPlot1(tmp, lineage="CD19",      ylab=PBylab, ylim=ylims1, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
-KineticsPlot1(tmp, lineage="Platelets", ylab=PBylab, ylim=c(30, 10000), xlim=xlim, 
+sig <- sig2
+KineticsPlot1(tmp, lineage="Platelets", ylab=PBylab, ylim=ylims2, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets")
 dev.off()
 
@@ -476,7 +572,7 @@ levels(PB$Irradiation.Dose)[levels(PB$Irradiation.Dose)=="900 Rad"] <- "Irradiat
 
 #Statistics
 dat <- BM
-dat[8:ncol(dat)] <- log10(BM[8:ncol(dat)])
+dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
 weeks <- c(3,6,10,20)
 lineages <- names(dat[8:ncol(dat)])
 lineages <- lineages[c(1:4, 6)]
@@ -492,17 +588,11 @@ for (l in lineages){
 }
 colnames(out) <- lineages
 rownames(out) <- weeks
-BMpvals <- out
-tmp <- out  # Make matching table with significance asterisks. 
-tmp[tmp<=0.001]            <- "***"
-tmp[tmp<=0.01 & tmp>0.001] <- "**"
-tmp[tmp<=0.05 & tmp>0.01]  <- "*"
-tmp[tmp<=0.10 & tmp>0.05]  <- "."
-tmp[tmp> 0.10]             <- "ns"
-BMstars <- tmp
+print(out)
+BMstars <- p2stars(out)
 
 dat <- PB
-dat[8:ncol(dat)] <- log10(PB[8:ncol(dat)])
+dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
 weeks <- c(3,6,10,20)
 lineages <- names(dat[8:ncol(dat)])
 lineages <- lineages[c(1:3, 5)]
@@ -518,14 +608,8 @@ for (l in lineages){
 }
 colnames(out) <- lineages
 rownames(out) <- weeks
-PBpvals <- out
-tmp <- out  # Make matching table with significance asterisks. 
-tmp[tmp<=0.001]            <- "***"
-tmp[tmp<=0.01 & tmp>0.001] <- "**"
-tmp[tmp<=0.05 & tmp>0.01]  <- "*"
-tmp[tmp<=0.10 & tmp>0.05]  <- "."
-tmp[tmp> 0.10]             <- "ns"
-PBstars <- tmp
+print(out) 
+PBstars <- p2stars(out)
 
 # Do a separate t.test for PB CD19 w3 to check things
 tmp <- PB[PB$Week==3 ,c(3,10)]
@@ -575,7 +659,7 @@ lcols <- c("#000000","#CD0000")  # line colors
 lty <- 1    # linetype (1=solid, 2=dash, 3=dotted)
 pchs1 <- c(16,1)
 
-png("figX_NSG_NRG_1col.png", width=(14.0*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
+png("figX_NSG_NRG_1.5col.png", width=(14.0*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
 par(mfrow=c(2,4), mar=c(3.2, 2.9, 2, 0.8), cex=0.7, mgp=c(2,0.6,0))
 
 # BM
@@ -686,10 +770,13 @@ GroupBarplot2 <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="b
   axis(1, las=2, tck=-0.02, at=c(2,5), labels=c("",""))
   title(main=title, line=0.5)
   arrows(bp, means+SEMs, bp, means-SEMs, lwd = 1.0, angle = 90, code = 3, length = 0.025)
-  #text(x = bp, y = GM$mean+GM$se+pdist, labels=GM$star , cex=0.7) #paste("p=",round(PLT$p.value,2))
+  text(x=2, y=sig1+5, labels=starsF[, valueCol], cex=0.9) # add significance stars
+  text(x=5, y=sig1+5, labels=starsM[, valueCol], cex=0.9) # add significance stars
   box()
 }
 #legend(locator(1),rownames(dat),fill=c("#ee7700","#3333ff"))
+
+
 
 # Function for barplot of +/- carriers, subdivided by sex. 
 GroupBarplot4 <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="black", title){
@@ -720,76 +807,126 @@ GroupBarplot4 <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="b
   axis(1, las=2, tck=-0.02, at=c(2,5), labels=c("",""))
   title(main=title, line=0.5)
   arrows(bp, means+SEMs, bp, means-SEMs, lwd = 1.0, angle = 90, code = 3, length = 0.025)
-  #text(x = bp, y = GM$mean+GM$se+pdist, labels=GM$star , cex=0.7) #paste("p=",round(PLT$p.value,2))
+  text(x=2, y=sig1+5, labels=starsF[, valueCol], cex=0.9) # add significance stars
+  text(x=5, y=sig1+5, labels=starsM[, valueCol], cex=0.9) # add significance stars
   box()
 }
 #legend(locator(1),rownames(dat),fill=c("#ee7700","#3333ff"))
 
 #pdf(file="./week20.pdf", width=11.5/2.54, height=8/2.54) #, family='Calibri')
-png("Gaby3.png", width=(3/4)*(11.5*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=10)
-par(mfrow=c(2,3), mar=c(2.6, 3.0, 2.1, 0.8), cex=0.7, mgp=c(2,0.6,0))
+png("figX_age_carrier_1col.png", width=(9.0*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
+par(mfrow=c(2,3), mar=c(3.0, 3.0, 2.1, 0.8), cex=0.7, mgp=c(2,0.6,0))
 axtitledist <- 1.6  # adjusts distance of x and y axis titles 
+sig1 <- log10(85)
+sig2 <- log10(85)
+
 # BM
 weeks <- c(20)
+
 # Age
+## stats
+### females
+dat <- BM34
+dat <- dat[dat$Sex=="F", ]
+dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
+lineages <- names(dat[8:ncol(dat)])
+out <- NULL
+for (l in lineages){
+  lin <- NULL
+  for (w in weeks){
+    tmp <- (t.test(dat[dat$Age=="young" & dat$Week==w, l], 
+                   dat[dat$Age=="old" & dat$Week==w, l], var.equal = FALSE))
+    lin <- c(lin, tmp$p.value)
+  }
+  out <- cbind(out, lin) 
+}
+colnames(out) <- lineages
+rownames(out) <- weeks
+print(out) 
+stars <- p2stars(out)
+# Workaround: adds 7 columns to the right so that my previously made valueCol script works: 
+starsF <- cbind(matrix(NA,1,7), stars)
+### males
+dat <- BM34
+dat <- dat[dat$Sex=="M", ]
+dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
+lineages <- names(dat[8:ncol(dat)])
+out <- NULL
+for (l in lineages){
+  lin <- NULL
+  for (w in weeks){
+    tmp <- (t.test(dat[dat$Age=="young" & dat$Week==w, l], 
+                   dat[dat$Age=="old" & dat$Week==w, l], var.equal = FALSE))
+    lin <- c(lin, tmp$p.value)
+  }
+  out <- cbind(out, lin) 
+}
+colnames(out) <- lineages
+rownames(out) <- weeks
+print(out) 
+stars <- p2stars(out)
+# Workaround: adds 7 columns to the right so that my previously made valueCol script works: 
+starsM <- cbind(matrix(NA,1,7), stars)
+## plots
 GroupBarplot2(BM34, week=weeks, valueCol=8,  cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="CD45")
 GroupBarplot2(BM34, week=weeks, valueCol=9,  cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="GM")
 GroupBarplot2(BM34, week=weeks, valueCol=10, cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="B Lymphoid")
+
+
 # Carriers
+## stats
+### females
+dat <- BM34
+dat <- dat[dat$Sex=="F", ]
+dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
+lineages <- names(dat[8:ncol(dat)])
+out <- NULL
+for (l in lineages){
+  lin <- NULL
+  for (w in weeks){
+    tmp <- (t.test(dat[dat$Carriers=="no" & dat$Week==w, l], 
+                   dat[dat$Carriers=="yes" & dat$Week==w, l], var.equal = FALSE))
+    lin <- c(lin, tmp$p.value)
+  }
+  out <- cbind(out, lin) 
+}
+colnames(out) <- lineages
+rownames(out) <- weeks
+print(out) 
+stars <- p2stars(out)
+# Workaround: adds 7 columns to the right so that my previously made valueCol script works: 
+starsF <- cbind(matrix(NA,1,7), stars)
+### males
+dat <- BM34
+dat <- dat[dat$Sex=="M", ]
+dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
+lineages <- names(dat[8:ncol(dat)])
+out <- NULL
+for (l in lineages){
+  lin <- NULL
+  for (w in weeks){
+    tmp <- (t.test(dat[dat$Carriers=="no" & dat$Week==w, l], 
+                   dat[dat$Carriers=="yes" & dat$Week==w, l], var.equal = FALSE))
+    lin <- c(lin, tmp$p.value)
+  }
+  out <- cbind(out, lin) 
+}
+colnames(out) <- lineages
+rownames(out) <- weeks
+print(out) 
+stars <- p2stars(out)
+# Workaround: adds 7 columns to the right so that my previously made valueCol script works: 
+starsM <- cbind(matrix(NA,1,7), stars)
+## plots
 GroupBarplot4(BM34, week=weeks, valueCol=8,  cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="CD45")
 GroupBarplot4(BM34, week=weeks, valueCol=9,  cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="GM")
 GroupBarplot4(BM34, week=weeks, valueCol=10, cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="B Lymphoid")
+
 dev.off()
 
 
 
 
-
-
-
-
-
-
-# Below is unused (so far)
-
-# Kinetics plots
-xlim <- c(1.5, 46.5)   # X-axis range
-lcols <- c("#000000","#CD0000")  # line colors
-lty <- 1    # linetype (1=solid, 2=dash, 3=dotted)
-pchs1 <- c(16,1)
-
-variables <- names(BM[1:7])
-
-
-
-
-# Statistics
-# T.Test
-datS2 <- NULL
-for (i in c(0,4,24)){
-  tmp <- (t.test(dat[dat$time==0, 2], dat[dat$time==i, 2],var.equal = FALSE))
-  tmp <- c(i, tmp$p.value)
-  datS2 <- rbind(datS2, tmp)
-}	
-
-datS2 <- data.frame(datS2)
-#datS2[, 2] <- as.numeric(levels(datS2[,2]))[datS2[,2]]
-
-# Add columns for asterisks. (Symbol meanings: . <= 0.10; * <= 0.05; ** <= 0.01; *** <= 0.001)
-for (i in 1:nrow(datS2)){
-  if (datS2[i, 2] <= 0.001){
-    datS2[i ,3] <- "***"
-  } else if (datS2[i, 2] <= 0.01){
-    datS2[i ,3] <- "**"
-  } else if (datS2[i, 2] <= 0.05){
-    datS2[i ,3] <- "*"
-  } else if (datS2[i, 2] <= 0.10){
-    datS2[i ,3] <- "."
-  } else{
-    datS2[i ,3] <- ""
-  }
-}
-colnames(datS2) <- c("time", "p.value", "star")		
 
 
 
