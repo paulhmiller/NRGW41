@@ -476,6 +476,14 @@ dev.off()
 
 
 
+# T cells
+## BM
+png("figX_W41_Tcells_1.5col.png", width=(14.0*ppi)/2.54, height=(16*ppi)/2.54, res=ppi, pointsize=8)
+par(mfcol=c(4,4), mar=c(3.2, 2.9, 2, 0.8), cex=0.7, mgp=c(2,0.6,0))
+sig <- 2
+
+
+
 
 
 
@@ -928,8 +936,35 @@ dev.off()
 
 
 
+# Radiation Survival Curve (of NRG)
+library(survival)
+data(package = "survival")
+data(lung)
 
 
+dat <- read.csv("../radiation_sensitivity/survival.csv")  #, colClasses=c(Mouse="character"))
+# Add survival object and do calculation
+dat$SurvObj <- with(dat, Surv(Survival, Censor == "N"))
+tmp<- survfit(SurvObj ~ Dose, data = dat, conf.type = "log-log")
+# Irradiation Doses
+doses <- unique(dat$Dose)
+# Make plot
+png("figX_irradiation_1col.png", width=(9.0*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
+plot(tmp, yaxt="n", xaxt="n", ylim=c(0,1),
+     xlab="weeks post-irradiation", ylab="fraction alive", 
+     mgp=c(axtitledist+0.4,0.5,0), xpd=FALSE)
+axis(2, las=2, mgp=c(0,1.7,0), tck=-0.02, hadj=0, at=seq(0,1,0.2) )
+axis(side=1, at=seq(0,6,1),  mgp=c(0.4,0.4,0), cex=0.8, tck=-0.03)
+xplace <- 5.5
+toplab <- 1.02
+step <- 0.06
+units <- "cGy"
+text(x=xplace, y=toplab-1*step, cex=0.9, labels=paste(doses[1],units))
+text(x=xplace, y=toplab-2*step, cex=0.9, labels=paste(doses[2],units))
+text(x=xplace, y=toplab-3*step, cex=0.9, labels=paste(doses[3],units))
+text(x=xplace, y=toplab-4*step, cex=0.9, labels=paste(doses[5],units))
+text(x=3.5, y=0.1, cex=0.9, labels=paste(doses[4],units))
+dev.off()
 
 
 
