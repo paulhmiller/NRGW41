@@ -12,6 +12,7 @@ dev.off()
 
 library(reshape2)
 library(magicaxis)
+library(reshape2)
 library(dplyr) # Call this last. Provides: filter, select, do, pipe, group_by
 
 
@@ -38,9 +39,7 @@ ppi <- 300
 pchs1 <- c(17,16)
 BMylab <- "% total BM cells"
 PBylab <- expression(paste(cells~x~10^3,"/mL"))
-cols3 <- c("#ee7700","#3333ff")  # colours for bar plots
-cols4 <- c("orange","yellow")  # colours for bar plots
-cols5 <- c("purple","green")  # colours for bar plots 
+
 xlim <- c(1.5, 30.5)   # X-axis range on line plots
 lcols <- c("#000000","#CD0000")  # line colors
 lty <- 1    # linetype (1=solid, 2=dash, 3=dotted)
@@ -477,12 +476,132 @@ dev.off()
 
 
 # T cells
-## BM
+
+
+
 png("figX_W41_Tcells_1.5col.png", width=(14.0*ppi)/2.54, height=(16*ppi)/2.54, res=ppi, pointsize=8)
 par(mfcol=c(4,4), mar=c(3.2, 2.9, 2, 0.8), cex=0.7, mgp=c(2,0.6,0))
 sig <- 2
+## BM# f, i
+tmp <- BM[BM$Irradiation.Dose=="Irradiated" & BM$Sex=="F",]
+# Statistics
+dat <- tmp
+dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
+weeks <- c(3,6,10,20,30)
+lineages <- names(dat[8:ncol(dat)])
+out <- NULL
+for (l in lineages){
+  lin <- NULL
+  for (w in weeks){
+    tmp2 <- (t.test(dat[dat$Strain=="NRG" & dat$Week==w, l], 
+                   dat[dat$Strain=="NRG-W41" & dat$Week==w, l], var.equal = FALSE))
+    lin <- c(lin, tmp2$p.value)
+  }
+  out <- cbind(out, lin) 
+}
+colnames(out) <- lineages
+rownames(out) <- weeks
+stars <- p2stars(out)
+# Plots
+KineticsPlot1(tmp, lineage="CD3.Percent",    ylab=BMylab, ylim=c(0.1, 100), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD3")
 
 
+tmp <- BM[BM$Week==30, ]
+tmp <- tmp[, c(3:5,12)]
+tmp[4] <- log10(tmp[4])
+
+
+
+
+# Couldn't figure out how to separate the dataframe base on multiple factors,
+# so am doing it manually:
+tmp1 <- dplyr::filter(tmp, Strain=="NRG-W41" & Sex=="F" & Irradiation.Dose=="Irradiated")
+tmp2 <- dplyr::filter(tmp, Strain=="NRG"     & Sex=="F" & Irradiation.Dose=="Irradiated")
+tmp3 <- dplyr::filter(tmp, Strain=="NRG-W41" & Sex=="M" & Irradiation.Dose=="Irradiated")
+tmp4 <- dplyr::filter(tmp, Strain=="NRG"     & Sex=="M" & Irradiation.Dose=="Irradiated")
+tmp5 <- dplyr::filter(tmp, Strain=="NRG-W41" & Sex=="F" & Irradiation.Dose=="Non-irradiated")
+tmp6 <- dplyr::filter(tmp, Strain=="NRG"     & Sex=="F" & Irradiation.Dose=="Non-irradiated")
+tmp7 <- dplyr::filter(tmp, Strain=="NRG-W41" & Sex=="M" & Irradiation.Dose=="Non-irradiated")
+tmp8 <- dplyr::filter(tmp, Strain=="NRG"     & Sex=="M" & Irradiation.Dose=="Non-irradiated")
+plot(seq(1:8), type="n", axes=F) 
+points(cfcNSG$percent ~ jitter(as.numeric(cfcNSG$Input),factor=0.5), cex=pcex, pch=pch1, col=col1)
+
+#myFun <- function(x){return(x)}
+#tmp2 <- tapply(tmp[,4], list(tmp$Strain, tmp$Sex, tmp$Irradiation.Dose), myFun)
+#means <- tapply(tmp[, valueCol], list(tmp$Age, tmp$Sex), mean, na.rm=TRUE)
+#  means <- means+5 # this is to enable subzero plotting on log transformed data
+#SEMs <- tapply(tmp[, valueCol], list(tmp$Age, tmp$Sex), se)
+plot <- barplot(means, beside=T, yaxt="n", col=cols, ylim=5+log10(ylim), 
+                xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
+  magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+  par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
+  barplot(means, beside=T, yaxt="n", col=cols, ylim=5+log10(ylim), 
+          xlab="recipient sex", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+  par(new=FALSE)
+  axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
+       labels=c(expression(10^-2), expression(10^-1),expression(10^0),
+                expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+  axis(1, las=2, tck=-0.02, at=c(2,5), labels=c("",""))
+  title(main=title, line=0.5)
+  arrows(bp, means+SEMs, bp, means-SEMs, lwd = 1.0, angle = 90, code = 3, length = 0.025)
+  text(x=2, y=sig1+5, labels=starsF[, valueCol], cex=0.9) # add significance stars
+  text(x=5, y=sig1+5, labels=starsM[, valueCol], cex=0.9) # add significance stars
+  box()
+}
+#legend(locator(1),rownames(dat),fill=c("#ee7700","#3333ff"))
+
+
+
+
+
+#tmp <- dplyr::summarise(group_by(cd3, Strain, Sex, Irradiation.Dose), 
+#         mean=mean(CD3.Percent, na.rm=TRUE), se=se(CD3.Percent))
+# Make plot
+#png("figX_cd3.png", width=(9.0*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
+plot(tmp, yaxt="n", xaxt="n", ylim=c(0,1),
+     xlab="weeks post-irradiation", ylab="fraction alive", 
+     mgp=c(axtitledist+0.4,0.5,0), xpd=FALSE)
+axis(2, las=2, mgp=c(0,1.7,0), tck=-0.02, hadj=0, at=seq(0,1,0.2) )
+axis(side=1, at=seq(0,6,1),  mgp=c(0.4,0.4,0), cex=0.8, tck=-0.03)
+xplace <- 5.5
+toplab <- 1.02
+step <- 0.06
+units <- "cGy"
+text(x=xplace, y=toplab-1*step, cex=0.9, labels=paste(doses[1],units))
+text(x=xplace, y=toplab-2*step, cex=0.9, labels=paste(doses[2],units))
+text(x=xplace, y=toplab-3*step, cex=0.9, labels=paste(doses[3],units))
+text(x=xplace, y=toplab-4*step, cex=0.9, labels=paste(doses[5],units))
+text(x=3.5, y=0.1, cex=0.9, labels=paste(doses[4],units))
+#dev.off()
+
+
+
+#cfcS <- merge(cfcS, data.frame(cfcstats), by = "Input")
+#cfcS$Input<-factor(cfcS$Input, levels=c("5GF", "3GF", "2%FBS", "fresh"))
+#cfcS <- cfcS[order(cfcS$Input), ]
+
+# Separate out arms
+cfcScntl <- cfcS[cfcS$Input=="fresh" ,]
+
+# Create Chart
+plot(seq(1:3), type="n", axes=F, xlim=xlims, ylim=ylim1, ylab=ylab1, xlab=xlab1, mgp=mpg1) 
+#cfcS$mean ~ cfcS$Input, 
+title(main="", line = titledist)
+rect(-1, 100-cfcScntl$se, 10, 100+cfcScntl$se, col="gray", border="gray")
+points(cfcNSG$percent ~ jitter(as.numeric(cfcNSG$Input),factor=0.5), cex=pcex, pch=pch1, col=col1) 
+points(cfc3GS$percent ~ jitter(as.numeric(cfc3GS$Input),factor=0.5), cex=pcex, pch=pch2, col=col2) 
+#axis(side=1, at=c(1:3), labels=rep("",3), mgp=c(3,0.5,0)) # makes tick marks
+text(cex=1, x=c(1:3)+0.3, y=-15, labels=xlab2, xpd=TRUE, srt=45, pos=2)
+axis(side=2, las=2, mgp=c(3,0.6,0))
+axis(side=1, at=seq(1:3), labels=rep(NA,3), mgp=c(2,1,0))  # Axis ticks
+# Error bars:
+segments(x0=c(1:3)-0.4, y0=cfcS$mean, x1=c(1:3)+0.4, y1=cfcS$mean, lwd = 1.5, col=col3)
+#segments(x0=c(1:3), y0=cfcS$mean-cfcS$se, x1=c(1:3), y1=cfcS$mean+cfcS$se, lwd = 1.5, col=col3)
+arrows(x0=c(1:3), y0=cfcS$mean- cfcS$se, x1=c(1:3), y1=cfcS$mean + cfcS$se, lwd = 1.5, angle = 90, code = 3, length = 0.05, col=col3)
+abline(h=100, lty=3, lwd = 1.2) 
+text(x = c(1:3), y = cfcS$mean+cfcS$se+pdist, labels =cfcS$star, cex=0.7) #paste("p=",round(cfcstats$p.value,2))
+box()
 
 
 
@@ -827,6 +946,10 @@ par(mfrow=c(2,3), mar=c(3.0, 3.0, 2.1, 0.8), cex=0.7, mgp=c(2,0.6,0))
 axtitledist <- 1.6  # adjusts distance of x and y axis titles 
 sig1 <- log10(85)
 sig2 <- log10(85)
+cols3 <- c("#ee7700","#3333ff")  # colours for bar plots
+cols4 <- c("orange","yellow")  # colours for bar plots
+cols5 <- c("purple4","green4")  # colours for bar plots 
+cols6 <- c("#1b9e77","#7570b3")  # colours for bar plots 
 
 # BM
 weeks <- c(20)
@@ -926,9 +1049,9 @@ stars <- p2stars(out)
 # Workaround: adds 7 columns to the right so that my previously made valueCol script works: 
 starsM <- cbind(matrix(NA,1,7), stars)
 ## plots
-GroupBarplot4(BM34, week=weeks, valueCol=8,  cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="CD45")
-GroupBarplot4(BM34, week=weeks, valueCol=9,  cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="GM")
-GroupBarplot4(BM34, week=weeks, valueCol=10, cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="B Lymphoid")
+GroupBarplot4(BM34, week=weeks, valueCol=8,  cols=cols5, ylab=BMylab, ylim=c(0.1, 100), title="CD45")
+GroupBarplot4(BM34, week=weeks, valueCol=9,  cols=cols5, ylab=BMylab, ylim=c(0.1, 100), title="GM")
+GroupBarplot4(BM34, week=weeks, valueCol=10, cols=cols5, ylab=BMylab, ylim=c(0.1, 100), title="B Lymphoid")
 
 dev.off()
 
