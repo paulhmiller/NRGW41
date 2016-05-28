@@ -59,32 +59,35 @@ Adat<-read.csv("./140310A B6NRGW41 txpt2/figures/PB kinetics.csv")
 Mdat<-read.csv("./140708M B6NRGW41 txpt3 & teratoma into W41/figures/MQCB38K PB Kinetics.csv")
 Rdat<-read.csv("./141118R W41 again/figures/R_PB kinetics.csv")
 Qdat<-read.csv("./140825Q W41 txpt4/figures/QCB20K PB Kinetics.csv", colClasses=c(Sex="factor"))
+Gdat<-read.csv("../2015/151217G nonirradiated W41/G_PB kinetics.csv", colClasses=c(Sex="factor"))
 
 
 #change directory to pooled_data directory
-setwd("C:/Users/paulm/CRC Paul/PROJECTS/NRG_W41/primary_kinetics_pool/figures")
-dir.create("PB")
+setwd("C:/Users/paulm/CRC Paul/PROJECTS/NRGW41/primary_kinetics_pool/")
 
 #delete non-common and un-needed columns
-Adat<-Adat[,c(1:5,10:14)]
-Mdat<-Mdat[,c(1:5,10,12:14,16)]
-Rdat<-Rdat[,c(1:5,10,12:14,16)]
-Qdat<-Qdat[,c(1:5,10,12:14,16)]
+Adat<-Adat[,c(1:6,10:14)]
+Mdat<-Mdat[,c(1:6,10,12:14,16)]
+Rdat<-Rdat[,c(1:6,10,12:14,16)]
+Qdat<-Qdat[,c(1:6,10,12:14,16)]
+Gdat<-Gdat[,c(2:7,8:12)]
 
 #add exp label column
 Adat<-cbind("140310A",Adat)
 Mdat<-cbind("140708M",Mdat)
 Rdat<-cbind("141118R",Rdat)
 Qdat<-cbind("140825Q",Qdat)
+Gdat<-cbind("151217G",Gdat)
 
 names(Adat)[1] <- "Exp"
 names(Mdat)[1] <- "Exp"
 names(Rdat)[1] <- "Exp"
 names(Qdat)[1] <- "Exp"
+names(Gdat)[1] <- "Exp"
 
 
 #merge
-dat <- rbind(Adat, Mdat, Rdat, Qdat)
+dat <- rbind(Adat, Mdat, Rdat, Qdat, Gdat)
 
 #just take CB38K
 #dat<-dat[dat$Input!="CB.20K",] 
@@ -93,7 +96,7 @@ dat <- rbind(Adat, Mdat, Rdat, Qdat)
 dat <- dat[!(dat$Week==26),] #remove week 26
 
 #write a csv file for record keeping
-write.table(dat, file= "AMQR CB20K40K PB kinetics.csv", sep=",", row.names=F)
+write.table(dat, file= "AMQRG CB20K40K PB kinetics.csv", sep=",", row.names=F)
 
 
 
