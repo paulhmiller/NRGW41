@@ -1,3 +1,7 @@
+table(apply(tmp, 1, function(x){paste(x,collapse=",")}))
+tmp <- aov(chimerism ~ age*sex*carriers)
+summary(tmp)
+
 # NRG-W41 Project
 # Scripts to Make Figures for Mouse Chimerism Data
 # Paul Miller [paulhmiller@gmail.com]
@@ -225,10 +229,10 @@ stars <- p2stars(out)
 # Plots
 KineticsPlot1(tmp, lineage="CD45.Percent",    ylab=BMylab, ylim=c(0.1, 100), xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
-KineticsPlot1(tmp, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
 KineticsPlot1(tmp, lineage="CD19.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
+KineticsPlot1(tmp, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
 KineticsPlot1(tmp, lineage="GPA.Percent",     ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA")
 
@@ -256,10 +260,10 @@ stars <- p2stars(out)
 # Plots
 KineticsPlot1(tmp, lineage="CD45.Percent",    ylab=BMylab, ylim=c(0.1, 100), xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
-KineticsPlot1(tmp, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
 KineticsPlot1(tmp, lineage="CD19.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
+KineticsPlot1(tmp, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
 KineticsPlot1(tmp, lineage="GPA.Percent",     ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA")
 
@@ -287,10 +291,10 @@ stars <- p2stars(out)
 # Plots
 KineticsPlot1(tmp, lineage="CD45.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
-KineticsPlot1(tmp, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
 KineticsPlot1(tmp, lineage="CD19.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
+KineticsPlot1(tmp, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
 KineticsPlot1(tmp, lineage="GPA.Percent",     ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA")
 
@@ -318,10 +322,10 @@ stars <- p2stars(out)
 # Plots
 KineticsPlot1(tmp, lineage="CD45.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
-KineticsPlot1(tmp, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
 KineticsPlot1(tmp, lineage="CD19.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
+KineticsPlot1(tmp, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
 KineticsPlot1(tmp, lineage="GPA.Percent",     ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA")
 dev.off()
@@ -363,10 +367,10 @@ stars <- p2stars(out)
 sig <- sig1
 KineticsPlot1(tmp, lineage="CD45",      ylab=PBylab, ylim=ylims1, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
-KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=ylims1, xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
 KineticsPlot1(tmp, lineage="CD19",      ylab=PBylab, ylim=ylims1, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
+KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=ylims1, xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
 sig <- sig2
 KineticsPlot1(tmp, lineage="Platelets", ylab=PBylab, ylim=ylims2, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets")
@@ -396,10 +400,10 @@ stars <- p2stars(out)
 sig <- sig1
 KineticsPlot1(tmp, lineage="CD45",      ylab=PBylab, ylim=ylims1, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
-KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=ylims1, xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
 KineticsPlot1(tmp, lineage="CD19",      ylab=PBylab, ylim=ylims1, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
+KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=ylims1, xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
 sig <- sig2
 KineticsPlot1(tmp, lineage="Platelets", ylab=PBylab, ylim=ylims2, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets")
@@ -429,10 +433,10 @@ stars <- p2stars(out)
 sig <- sig1
 KineticsPlot1(tmp, lineage="CD45",      ylab=PBylab, ylim=ylims1, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
-KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=ylims1, xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
 KineticsPlot1(tmp, lineage="CD19",      ylab=PBylab, ylim=ylims1, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
+KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=ylims1, xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
 sig <- sig2
 KineticsPlot1(tmp, lineage="Platelets", ylab=PBylab, ylim=ylims2, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets")
@@ -462,10 +466,10 @@ stars <- p2stars(out)
 sig <- sig1
 KineticsPlot1(tmp, lineage="CD45",      ylab=PBylab, ylim=ylims1, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45")
-KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=ylims1, xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
 KineticsPlot1(tmp, lineage="CD19",      ylab=PBylab, ylim=ylims1, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid")
+KineticsPlot1(tmp, lineage="CD33.15",   ylab=PBylab, ylim=ylims1, xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM")
 sig <- sig2
 KineticsPlot1(tmp, lineage="Platelets", ylab=PBylab, ylim=ylims2, xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets")
@@ -793,20 +797,20 @@ par(mfrow=c(2,4), mar=c(3.2, 2.9, 2, 0.8), cex=0.7, mgp=c(2,0.6,0))
 stars <- BMstars
 KineticsPlot2(BM, lineage="CD45.Percent",    ylab=BMylab, ylim=c(1, 100), xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45", sig=2)
-KineticsPlot2(BM, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM", sig=2)
 KineticsPlot2(BM, lineage="CD19.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid", sig=2)
+KineticsPlot2(BM, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM", sig=2)
 KineticsPlot2(BM, lineage="GPA.Percent",     ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA", sig=2)
 # PB
 stars <- PBstars
 KineticsPlot2(PB, lineage="CD45",      ylab=PBylab, ylim=c(1, 1000), xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45", sig=3)
-KineticsPlot2(PB, lineage="CD33.15",   ylab=PBylab, ylim=c(1, 1000), xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM", sig=3)
 KineticsPlot2(PB, lineage="CD19",      ylab=PBylab, ylim=c(1, 1000), xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid", sig=3)
+KineticsPlot2(PB, lineage="CD33.15",   ylab=PBylab, ylim=c(1, 1000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM", sig=3)
 KineticsPlot2(PB, lineage="Platelets", ylab=PBylab, ylim=c(30, 10000), xlim=xlim, 
              cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets", sig=4)
 dev.off()
@@ -848,8 +852,8 @@ BM <- rbind(BM1, BM2)
 # Make codes the same:
 BM$Age[BM$Age=="O"] <- "Old"
 BM$Age[BM$Age=="Y"] <- "Young"
-levels(BM$Age)[levels(BM$Age)=="Old"] <- "old"
-levels(BM$Age)[levels(BM$Age)=="Young"] <- "young"
+levels(BM$Age)[levels(BM$Age)=="Old"] <- "21-25"
+levels(BM$Age)[levels(BM$Age)=="Young"] <- "8-12"
 BM$Carriers[BM$Carriers=="N"] <- "no"
 BM$Carriers[BM$Carriers=="Y"] <- "yes"
 BM <- droplevels(BM)
@@ -880,16 +884,16 @@ GroupBarplot2 <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="b
   } else {
     stop("error: function only handles 13 (for BM) or 12 (for PB) columns")
   }
-  means <- tapply(tmp[, valueCol], list(tmp$Age, tmp$Sex), mean, na.rm=TRUE)
+  means <- tapply(tmp[, valueCol], list(tmp$Sex, tmp$Age), mean, na.rm=TRUE)
   print(means)
   means <- means+5 # this is to enable subzero plotting on log transformed data
-  SEMs <- tapply(tmp[, valueCol], list(tmp$Age, tmp$Sex), se)
+  SEMs <- tapply(tmp[, valueCol], list(tmp$Sex, tmp$Age), se)
   bp <- barplot(means, beside=T, yaxt="n", col=cols, ylim=5+log10(ylim), 
                 xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
   magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
   par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
   barplot(means, beside=T, yaxt="n", col=cols, ylim=5+log10(ylim), 
-          xlab="recipient sex", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+          xlab="age (weeks)", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
   par(new=FALSE)
   axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
        labels=c(expression(10^-2), expression(10^-1),expression(10^0),
@@ -897,8 +901,9 @@ GroupBarplot2 <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="b
   axis(1, las=2, tck=-0.02, at=c(2,5), labels=c("",""))
   title(main=title, line=0.5)
   arrows(bp, means+SEMs, bp, means-SEMs, lwd = 1.0, angle = 90, code = 3, length = 0.025)
-  text(x=2, y=sig1+5, labels=starsF[, valueCol], cex=0.9) # add significance stars
-  text(x=5, y=sig1+5, labels=starsM[, valueCol], cex=0.9) # add significance stars
+# These are now incorrect, as they are for different pairings. Need to switch to M v F, or instead have multifactoral table.
+#  text(x=2, y=sig1+5, labels=starsF[, valueCol], cex=0.9) # add significance stars
+#  text(x=5, y=sig1+5, labels=starsM[, valueCol], cex=0.9) # add significance stars
   box()
 }
 #legend(locator(1),rownames(dat),fill=c("#ee7700","#3333ff"))
@@ -918,15 +923,15 @@ GroupBarplot4 <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="b
   } else {
     stop("error: function only handles 13 (for BM) or 12 (for PB) columns")
   }
-  means <- tapply(tmp[, valueCol], list(tmp$Carriers, tmp$Sex), mean, na.rm=TRUE)
+  means <- tapply(tmp[, valueCol], list(tmp$Sex, tmp$Carriers), mean, na.rm=TRUE)
   means <- means+5 # this is to enable subzero plotting on log transformed data
-  SEMs <- tapply(tmp[, valueCol], list(tmp$Carriers, tmp$Sex), se)
+  SEMs <- tapply(tmp[, valueCol], list(tmp$Sex, tmp$Carriers), se)
   bp <- barplot(means, beside=T, yaxt="n", col=cols, ylim=5+log10(ylim), 
                 xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
   magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
   par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
   barplot(means, beside=T, yaxt="n", col=cols, ylim=5+log10(ylim), 
-          xlab="recipient sex", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+          xlab="accessory cells", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
   par(new=FALSE)
   axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
        labels=c(expression(10^-2), expression(10^-1),expression(10^0),
@@ -934,8 +939,8 @@ GroupBarplot4 <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="b
   axis(1, las=2, tck=-0.02, at=c(2,5), labels=c("",""))
   title(main=title, line=0.5)
   arrows(bp, means+SEMs, bp, means-SEMs, lwd = 1.0, angle = 90, code = 3, length = 0.025)
-  text(x=2, y=sig1+5, labels=starsF[, valueCol], cex=0.9) # add significance stars
-  text(x=5, y=sig1+5, labels=starsM[, valueCol], cex=0.9) # add significance stars
+#  text(x=2, y=sig1+5, labels=starsF[, valueCol], cex=0.9) # add significance stars
+#  text(x=5, y=sig1+5, labels=starsM[, valueCol], cex=0.9) # add significance stars
   box()
 }
 #legend(locator(1),rownames(dat),fill=c("#ee7700","#3333ff"))
@@ -1000,8 +1005,8 @@ stars <- p2stars(out)
 starsM <- cbind(matrix(NA,1,7), stars)
 ## plots
 GroupBarplot2(BM34, week=weeks, valueCol=8,  cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="CD45")
-GroupBarplot2(BM34, week=weeks, valueCol=9,  cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="GM")
 GroupBarplot2(BM34, week=weeks, valueCol=10, cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="B Lymphoid")
+GroupBarplot2(BM34, week=weeks, valueCol=9,  cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="GM")
 
 
 # Carriers
@@ -1049,9 +1054,9 @@ stars <- p2stars(out)
 # Workaround: adds 7 columns to the right so that my previously made valueCol script works: 
 starsM <- cbind(matrix(NA,1,7), stars)
 ## plots
-GroupBarplot4(BM34, week=weeks, valueCol=8,  cols=cols5, ylab=BMylab, ylim=c(0.1, 100), title="CD45")
-GroupBarplot4(BM34, week=weeks, valueCol=9,  cols=cols5, ylab=BMylab, ylim=c(0.1, 100), title="GM")
-GroupBarplot4(BM34, week=weeks, valueCol=10, cols=cols5, ylab=BMylab, ylim=c(0.1, 100), title="B Lymphoid")
+GroupBarplot4(BM34, week=weeks, valueCol=8,  cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="CD45")
+GroupBarplot4(BM34, week=weeks, valueCol=10, cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="B Lymphoid")
+GroupBarplot4(BM34, week=weeks, valueCol=9,  cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="GM")
 
 dev.off()
 
