@@ -18,6 +18,7 @@ dev.off()
 library(reshape2)
 library(magicaxis)
 library(reshape2)
+library(car)
 library(dplyr) # Call this last. Provides: filter, select, do, pipe, group_by
 
 
@@ -913,25 +914,36 @@ GroupBarplot4 <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="b
 
 
 
-# Multifactorial Stats
+# Multifactorial Stats #
 tmp <- BM34
 tmp <- tmp[, c(3,4,7,8:10,12)]
 table(apply(tmp[,1:3], 1, function(x){paste(x,collapse=",")}))
-tmp <- tmp[, c(1:3, 4)]
 
-# 3-way factorial anova:
-lm(Human.Percent ~ Age + Sex, data=tmp)
+# 3-way factorial anova, 2 levels max:
+# help from statmethods.net/stats/anova.html 
+# & http://goanna.cs.rmit.edu.au/~fscholer/anova.php
+CD45 <- aov(Human.Percent ~ Sex + Age + Carriers 
+           + Sex:Age + Sex:Carriers + Age:Carriers, data=tmp)
+CD19 <- aov(CD19.Percent ~ Sex + Age + Carriers 
+           + Sex:Age + Sex:Carriers + Age:Carriers, data=tmp)
+GM <- aov(CD33.Percent ~ Sex + Age + Carriers 
+           + Sex:Age + Sex:Carriers + Age:Carriers, data=tmp)
+# Need type 3 because unbalanced design:
+# drop1(fit,~.,test="F") # does same as below
+out <- Anova(CD45, type="III") 
+write.csv(out, file="ANOVA_CD45.csv")
+out <- Anova(CD19, type="III") 
+write.csv(out, file="ANOVA_CD19.csv")
+out <- Anova(GM,   type="III") 
+write.csv(out, file="ANOVA_GM.csv")
 
-
-
-fit <- aov(Human.Percent ~ AgeSex + Carriers +
-             Age:Sex)
-tmp <- aov(chimerism ~ age*sex*carriers)
-summary(tmp)
-
-
-
-
+# I read that having contrasts is important, but it gives the same result
+# Repeated here, but with contrasts, and consdensed into one formula. 
+Anova(lm(Human.Percent ~ Sex + Carriers + Age + 
+         Sex:Carriers + Sex:Age + Carriers:Age,
+         data=tmp, 
+         contrasts=list(Sex=contr.sum, Carriers=contr.sum, Age=contr.sum)), 
+         type=3)
 
 
 
