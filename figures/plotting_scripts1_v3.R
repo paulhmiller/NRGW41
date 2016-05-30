@@ -59,6 +59,33 @@ vAdj <- 0.0  # Jitter-like effect on x-axis, use values between 0-2
 
 
 
+# Radiation Survival Curve (of NRG)
+library(survival)
+
+dat <- read.csv("../radiation_sensitivity/survival.csv")  #, colClasses=c(Mouse="character"))
+# Add survival object and do calculation
+dat$SurvObj <- with(dat, Surv(Survival, Censor == "N"))
+tmp<- survfit(SurvObj ~ Dose, data = dat, conf.type = "log-log")
+# Irradiation Doses
+doses <- unique(dat$Dose)
+# Make plot
+pdf(file="figX_irradiation_1col.pdf", width=9/2.54, height=8/2.54, pointsize=8) #, family='Calibri')
+#png("figX_irradiation_1col.png", width=(9.0*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
+plot(tmp, yaxt="n", xaxt="n", ylim=c(0,1),
+     xlab="weeks post-irradiation", ylab="fraction alive", 
+     mgp=c(axtitledist+0.4,0.5,0), xpd=FALSE)
+axis(2, las=2, mgp=c(0,1.7,0), tck=-0.02, hadj=0, at=seq(0,1,0.2) )
+axis(side=1, at=seq(0,6,1),  mgp=c(0.4,0.4,0), cex=0.8, tck=-0.03)
+xplace <- 5.5
+toplab <- 1.02
+step <- 0.06
+units <- "cGy"
+text(x=xplace, y=toplab-1*step, cex=0.9, labels=paste(doses[1],units))
+text(x=xplace, y=toplab-2*step, cex=0.9, labels=paste(doses[2],units))
+text(x=xplace, y=toplab-3*step, cex=0.9, labels=paste(doses[3],units))
+text(x=xplace, y=toplab-4*step, cex=0.9, labels=paste(doses[5],units))
+text(x=3.5, y=0.1, cex=0.9, labels=paste(doses[4],units))
+dev.off()
 
 
 
@@ -914,40 +941,57 @@ GroupBarplot4 <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="b
 
 
 
-# Multifactorial Stats #
+
+
+
+
+
+# Side by side analysis
 tmp <- BM34
-tmp <- tmp[, c(3,4,7,8:10,12)]
-table(apply(tmp[,1:3], 1, function(x){paste(x,collapse=",")}))
+tmp[, 8:13] <- log10(tmp[, 8:13])
+# for overview, aggregated data frame returning means for numeric variables
+aggregate(tmp, by=list(tmp$Age, tmp$Carriers), FUN=mean, na.rm=TRUE) %>% print()
+# Make new column with combined variables
+tmp$group <- paste(tmp$Sex, ",", tmp$Age, ",", tmp$Carriers)
+# Change string to factor
+tmp[14] <- lapply(tmp[14], as.factor)
+plot(tmp$group, tmp$Human.Percent)
 
-# 3-way factorial anova, 2 levels max:
-# help from statmethods.net/stats/anova.html 
-# & http://goanna.cs.rmit.edu.au/~fscholer/anova.php
-CD45 <- aov(Human.Percent ~ Sex + Age + Carriers 
-           + Sex:Age + Sex:Carriers + Age:Carriers, data=tmp)
-CD19 <- aov(CD19.Percent ~ Sex + Age + Carriers 
-           + Sex:Age + Sex:Carriers + Age:Carriers, data=tmp)
-GM <- aov(CD33.Percent ~ Sex + Age + Carriers 
-           + Sex:Age + Sex:Carriers + Age:Carriers, data=tmp)
-# Need type 3 because unbalanced design:
-# drop1(fit,~.,test="F") # does same as below
-out <- Anova(CD45, type="III") 
-write.csv(out, file="ANOVA_CD45.csv")
-out <- Anova(CD19, type="III") 
-write.csv(out, file="ANOVA_CD19.csv")
-out <- Anova(GM,   type="III") 
-write.csv(out, file="ANOVA_GM.csv")
+means <- tmp %>% group_by(group) %>% summarise(avg=mean(Human.Percent))  
+groups <- means$group
+means[,2] <- means[,2]+5 # this is to enable subzero plotting on log transformed data
+means <- means$avg
+SEMs <-  tmp %>% group_by(group) %>% summarise(sem=se(Human.Percent))  
+SEMs <- SEMs$sem
 
-# I read that having contrasts is important, but it gives the same result
-# Repeated here, but with contrasts, and consdensed into one formula. 
-Anova(lm(Human.Percent ~ Sex + Carriers + Age + 
-         Sex:Carriers + Sex:Age + Carriers:Age,
-         data=tmp, 
-         contrasts=list(Sex=contr.sum, Carriers=contr.sum, Age=contr.sum)), 
-         type=3)
+# Plot
+ylab=BMylab 
+ylim=c(0.1, 100)
+bp <- barplot(means, beside=T, yaxt="n", col="black", ylim=5+log10(ylim), 
+              xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
+arrows(bp, means+SEMs, bp, means-SEMs, lwd = 1.0, angle = 90, code = 3, length = 0.025)
+magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
+barplot(means, beside=T, yaxt="n", col="black", ylim=5+log10(ylim), 
+        xlab="group", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+par(new=FALSE)
+axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
+     labels=c(expression(10^-2), expression(10^-1),expression(10^0),
+              expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+axis(1, las=2, tck=-0.02, at=bp, labels=groups)
+title(main="CD45", line=0.5)
+box()
+
+ 
+#  text(x=2, y=sig1+5, labels=starsF[, valueCol], cex=0.9) # add significance stars
+#  text(x=5, y=sig1+5, labels=starsM[, valueCol], cex=0.9) # add significance stars
+}
+#legend(locator(1),rownames(dat),fill=c("#ee7700","#3333ff"))
 
 
 
-#pdf(file="./week20.pdf", width=11.5/2.54, height=8/2.54) #, family='Calibri')
+
+#pdf(file="./week21.pdf", width=11.5/2.54, height=8/2.54) #, family='Calibri')
 #png("figX_age_carrier_1col.png", width=(9.0*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
 pdf(file="figX_sex_age_access_1col.pdf", width=9/2.54, height=8/2.54, pointsize=8) #, family='Calibri')
 par(mfrow=c(2,3), mar=c(3.0, 3.0, 2.1, 0.8), cex=0.7, mgp=c(2,0.6,0))
@@ -1063,37 +1107,47 @@ GroupBarplot4(BM34, week=weeks, valueCol=9,  cols=cols3, ylab=BMylab, ylim=c(0.1
 
 dev.off()
 
+# Multifactorial Stats #
+tmp <- BM34
+tmp <- tmp[, c(3,4,7,8:10,12)]
+table(apply(tmp[,1:3], 1, function(x){paste(x,collapse=",")}))
+# 3-way factorial anova, 2 levels max:
+# help from statmethods.net/stats/anova.html 
+# & http://goanna.cs.rmit.edu.au/~fscholer/anova.php
+CD45 <- aov(Human.Percent ~ Sex + Age + Carriers 
+           + Sex:Age + Sex:Carriers + Age:Carriers, data=tmp)
+CD19 <- aov(CD19.Percent ~ Sex + Age + Carriers 
+           + Sex:Age + Sex:Carriers + Age:Carriers, data=tmp)
+GM <- aov(CD33.Percent ~ Sex + Age + Carriers 
+           + Sex:Age + Sex:Carriers + Age:Carriers, data=tmp)
+# Need type 3 because unbalanced design:
+# drop1(fit,~.,test="F") # does same as below
+out <- Anova(CD45, type="III") 
+write.csv(out, file="ANOVA_CD45.csv")
+out <- Anova(CD19, type="III") 
+write.csv(out, file="ANOVA_CD19.csv")
+out <- Anova(GM,   type="III") 
+write.csv(out, file="ANOVA_GM.csv")
+
+# I read that having contrasts is important, but it gives the same result
+# Repeated here, but with contrasts, and consdensed into one formula. 
+Anova(lm(Human.Percent ~ Sex + Carriers + Age + 
+         Sex:Carriers + Sex:Age + Carriers:Age,
+         data=tmp, 
+         contrasts=list(Sex=contr.sum, Carriers=contr.sum, Age=contr.sum)), 
+         type=3)
 
 
 
 
-# Radiation Survival Curve (of NRG)
-library(survival)
 
-dat <- read.csv("../radiation_sensitivity/survival.csv")  #, colClasses=c(Mouse="character"))
-# Add survival object and do calculation
-dat$SurvObj <- with(dat, Surv(Survival, Censor == "N"))
-tmp<- survfit(SurvObj ~ Dose, data = dat, conf.type = "log-log")
-# Irradiation Doses
-doses <- unique(dat$Dose)
-# Make plot
-pdf(file="figX_irradiation_1col.pdf", width=9/2.54, height=8/2.54, pointsize=8) #, family='Calibri')
-#png("figX_irradiation_1col.png", width=(9.0*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
-plot(tmp, yaxt="n", xaxt="n", ylim=c(0,1),
-     xlab="weeks post-irradiation", ylab="fraction alive", 
-     mgp=c(axtitledist+0.4,0.5,0), xpd=FALSE)
-axis(2, las=2, mgp=c(0,1.7,0), tck=-0.02, hadj=0, at=seq(0,1,0.2) )
-axis(side=1, at=seq(0,6,1),  mgp=c(0.4,0.4,0), cex=0.8, tck=-0.03)
-xplace <- 5.5
-toplab <- 1.02
-step <- 0.06
-units <- "cGy"
-text(x=xplace, y=toplab-1*step, cex=0.9, labels=paste(doses[1],units))
-text(x=xplace, y=toplab-2*step, cex=0.9, labels=paste(doses[2],units))
-text(x=xplace, y=toplab-3*step, cex=0.9, labels=paste(doses[3],units))
-text(x=xplace, y=toplab-4*step, cex=0.9, labels=paste(doses[5],units))
-text(x=3.5, y=0.1, cex=0.9, labels=paste(doses[4],units))
-dev.off()
+
+
+
+
+
+
+
 
 
 
