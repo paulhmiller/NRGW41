@@ -90,6 +90,495 @@ dev.off()
 
 
 
+
+
+##### NSG versus NRG #####
+##### BM #####
+
+BM <- read.csv("../NSGvsNRG/C_BM kinetics.csv", colClasses=c(Sex="factor"))
+# Adjust time-points so that BMa can be pooled:
+BM$Week[BM$Week==24] <- 20
+BM$Week[BM$Week==8] <- 10 
+BM <- BM[!(BM$Week==17),] #remove week 17
+# Change low values in leukocyte columns to detection threshold
+BM[,8:13][BM[,8:13] < 0.01] <- 0.01  
+#Change irradiation doses to enable merge
+levels(BM$Irradiation.Dose)[levels(BM$Irradiation.Dose)=="250 Rad"] <- "Irradiated" 
+levels(BM$Irradiation.Dose)[levels(BM$Irradiation.Dose)=="800 Rad"] <- "Irradiated"
+levels(BM$Irradiation.Dose)[levels(BM$Irradiation.Dose)=="315 Rad"] <- "Irradiated" 
+levels(BM$Irradiation.Dose)[levels(BM$Irradiation.Dose)=="900 Rad"] <- "Irradiated"
+
+##### PB #####
+
+PB <- read.csv("../NSGvsNRG/C_PB kinetics.csv", colClasses=c(Sex="factor"))
+# Adjust time-points so that BMa can be pooled:
+PB$Week[PB$Week==24] <- 20
+PB$Week[PB$Week==8] <- 10 
+PB <- PB[!(PB$Week==17),] #remove week 17
+# Change low values in leukocyte & platelet columns to detection threshold
+PB[,8:11][PB[,8:11] < 0.2] <- 0.2 
+PB[,12][PB[,12] < 25] <- 25 
+#Change irradiation doses to enable merge
+levels(PB$Irradiation.Dose)[levels(PB$Irradiation.Dose)=="250 Rad"] <- "Irradiated" 
+levels(PB$Irradiation.Dose)[levels(PB$Irradiation.Dose)=="800 Rad"] <- "Irradiated"
+levels(PB$Irradiation.Dose)[levels(PB$Irradiation.Dose)=="315 Rad"] <- "Irradiated" 
+levels(PB$Irradiation.Dose)[levels(PB$Irradiation.Dose)=="900 Rad"] <- "Irradiated"
+
+#Statistics
+dat <- BM
+dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
+weeks <- c(3,6,10,20,30)
+lineages <- names(dat[8:ncol(dat)])
+lineages <- lineages[c(1:4, 6)]
+out <- NULL
+for (l in lineages){
+  lin <- NULL
+  for (w in weeks){
+    tmp <- (t.test(dat[dat$Strain=="NSG" & dat$Week==w, l], 
+                   dat[dat$Strain=="NRG" & dat$Week==w, l], var.equal = FALSE))
+    lin <- c(lin, tmp$p.value)
+  }
+  out <- cbind(out, lin) 
+}
+colnames(out) <- lineages
+rownames(out) <- weeks
+print(out)
+BMstars <- p2stars(out)
+
+dat <- PB
+dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
+weeks <- c(3,6,10,20,30)
+lineages <- names(dat[8:ncol(dat)])
+lineages <- lineages[c(1:3, 5)]
+out <- NULL
+for (l in lineages){
+  lin <- NULL
+  for (w in weeks){
+    tmp <- (t.test(dat[dat$Strain=="NSG" & dat$Week==w, l], 
+                   dat[dat$Strain=="NRG" & dat$Week==w, l], var.equal = FALSE))
+    lin <- c(lin, tmp$p.value)
+  }
+  out <- cbind(out, lin) 
+}
+colnames(out) <- lineages
+rownames(out) <- weeks
+print(out) 
+PBstars <- p2stars(out)
+
+# Do a separate t.test for PB CD19 w3 to check things
+tmp <- PB[PB$Week==3 ,c(3,10)]
+tmp[,2] <- log10(tmp[,2])
+NSG <- tmp[tmp$Strain=="NSG", 2]
+NRG <- tmp[tmp$Strain=="NRG", 2]
+t.test(NSG, NRG, var.equal = FALSE)
+
+# Kinetics plots
+# Function for NSG verus NRG plots:
+KineticsPlot2 <- function(dataframe, lineage="CD45.Percent", ylab, ylim, xlim=c(2,31), 
+                          lty=1, cols="black", pcex=1, lcex=1, title, sig){
+  #  Makes a grouped lineplot, with strains plotted together and sexes separated.
+  #  Takes plot title, name of dataframe, and column number with values. 
+  #  Data is log10 transformed for mean and SEM calculation. 
+  #  Requires dplyr and reshape. 
+  tmp <- melt(dataframe, id.vars=c("Exp", "Week", "Strain", "Sex", "Irradiation.Dose", "Input", "Mouse"))
+  tmp[9] <- log10(tmp[9])
+  tmp <- tmp[tmp$variable==lineage, ]
+  tmp <- dplyr::summarise(group_by(tmp, Week, Strain, variable), mean=mean(value, na.rm=TRUE), se=se(value))
+  plot(tmp$mean ~ tmp$Week, type="n", axes=F,  ylim=log10(ylim), xlim=xlim, col=tmp$Strain,
+       xlab="weeks post-transplant", ylab=ylab, mgp=c(axtitledist,0.5,0))
+  text(x = unique(tmp$Week), y=sig, labels=stars[ ,lineage] , cex=0.9) #paste("p=",round(PLT$p.value,2))
+  sep1 <- tmp[tmp$Strain=="NRG", ]
+  sep1$Week <- sep1$Week + (vAdj/1)
+  sep2 <- tmp[tmp$Strain=="NSG", ]
+  sep2$Week <- sep2$Week + (vAdj/2)
+  arrows(sep1$Week, sep1$mean+sep1$se, sep1$Week, sep1$mean-sep1$se, col=c(cols[1]), 
+         lwd = 1.5, angle = 90, code = 3, length = 0.02) 
+  arrows(sep2$Week, sep2$mean+sep2$se, sep2$Week, sep2$mean-sep2$se, col=c(cols[1]), 
+         lwd = 1.5, angle = 90, code = 3, length = 0.02) 
+  points(sep1$mean ~ sep1$Week, cex=pcex, pch=pchs1[1], col=cols[1]) 
+  points(sep2$mean ~ sep2$Week, cex=pcex, pch=pchs1[2], col=cols[1]) 
+  lines(sep1$mean ~ sep1$Week, cex=lcex, lty=lty, col=cols[1])
+  lines(sep2$mean ~ sep2$Week, cex=lcex, lty=lty, col=cols[1])
+  magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+  axis(side=1, at=c(3, 6, 10, 20, 30),  mgp=c(0.8,0.4,0), cex=0.8, tck=-0.03)
+  axis(side=1, at=6, labels=6, mgp=c(0.8,0.4,0), cex=0.8, tck=-0.03) # to add missing 6
+  axis(2, las=2, mgp=c(2.5,1.7,0), tck=-0.01, hadj=0, at=c(-2, -1, 0, 1, 2, 3, 4, 5), 
+       labels=c(expression(10^-2), expression(10^-1),expression(10^0),expression(10^1),
+                expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+  title(main=title, line=0.5)
+  box()
+}
+
+xlim <- c(1.5, 30.5)   # X-axis range
+lcols <- c("#000000","#CD0000")  # line colors
+lty <- 1    # linetype (1=solid, 2=dash, 3=dotted)
+pchs1 <- c(16,1)
+
+#png("figX_NSG_NRG_1.5col.png", width=(14.0*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
+pdf(file="figX_NSG_NRG_1.5col.pdf", width=14/2.54, height=8/2.54, pointsize=8) #, family='Calibri')
+par(mfrow=c(2,4), mar=c(3.2, 2.9, 2, 0.8), cex=0.7, mgp=c(2,0.6,0))
+
+# BM
+stars <- BMstars
+KineticsPlot2(BM, lineage="CD45.Percent",    ylab=BMylab, ylim=c(1, 100), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45", sig=2)
+KineticsPlot2(BM, lineage="CD19.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid", sig=2)
+KineticsPlot2(BM, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM", sig=2)
+KineticsPlot2(BM, lineage="GPA.Percent",     ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA", sig=2)
+# PB
+stars <- PBstars
+KineticsPlot2(PB, lineage="CD45",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45", sig=3)
+KineticsPlot2(PB, lineage="CD19",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid", sig=3)
+KineticsPlot2(PB, lineage="CD33.15",   ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM", sig=3)
+KineticsPlot2(PB, lineage="Platelets", ylab=PBylab, ylim=c(30, 10000), xlim=xlim, 
+             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets", sig=4)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##### Old Age #####
+##### BM #####
+tmp <- read.csv("../old_age/OldAge1_BM.csv", strip.white=TRUE)  #, colClasses=c(Mouse="character"))
+Exp <- rep("OldAge1", nrow(tmp))
+tmp <- cbind(Exp, tmp)
+BM1 <- tmp[c(1,6, 7:11, 22:27)]
+
+tmp <- read.csv("../old_age/OldAge2_BM.csv", strip.white=TRUE)  #, colClasses=c(Mouse="character"))
+Exp <- rep("OldAge2", nrow(tmp))
+tmp <- cbind(Exp, tmp)
+BM2 <- tmp[c(1,6, 7:11, 22:27)]
+
+# Adjust time-points so that BMa can be pooled:
+BM2$Week <- round(BM2$Week, digits=0)
+BM2$Week[BM2$Week==21] <- 20
+BM2$Week[BM2$Week==25] <- 20
+
+
+# Merge experiment 1 & 2:
+BM <- rbind(BM1, BM2)
+
+# Make codes the same:
+BM$Age[BM$Age=="O"] <- "Old"
+BM$Age[BM$Age=="Y"] <- "Young"
+levels(BM$Age)[levels(BM$Age)=="Old"] <- "21-25"
+levels(BM$Age)[levels(BM$Age)=="Young"] <- "8-12"
+BM$Carriers[BM$Carriers=="N"] <- "no"
+BM$Carriers[BM$Carriers=="Y"] <- "yes"
+BM <- droplevels(BM)
+# reorder factor levels:
+BM$Age <- factor(BM$Age,levels(BM$Age)[c(2,1)])
+#print(levels(BM$Age))
+
+# Change low values in leukocyte columns to detection threshold
+BM[,8:13][BM[,8:13] < 0.01] <- 0.01  
+
+# Select Data
+BM34 <- BM[BM$Cell.type=="CD34+" ,]
+BM34 <- BM34[BM34$Week==20, ]
+#BM49f50 <- BM[BM$Cell.type=="50 49f+" ,]
+#BM49f60 <- BM[BM$Cell.type=="60 49f+" ,]
+#BM49f <- rbind(BM49f50, BM49f60)
+
+# Function for barplot of Old versus Young, subdivided by Sex.
+GroupBarplot2 <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="black", title){
+  #  Makes a grouped barplot, time-points plotted together and sexes separated.
+  #  Takes plot title, name of dataframe, time-point to plot, and column number 
+  #  that contains the values to plot. 
+  tmp <- dataframe[dataframe$Week==week, ]  
+  if(ncol(tmp)==13){
+    tmp[8:13] <- log10(tmp[8:13])
+  } else if(ncol(tmp)==12){
+    tmp[8:12] <- log10(tmp[8:12])
+  } else {
+    stop("error: function only handles 13 (for BM) or 12 (for PB) columns")
+  }
+  means <- tapply(tmp[, valueCol], list(tmp$Sex, tmp$Age), mean, na.rm=TRUE)
+  print(means)
+  means <- means+5 # this is to enable subzero plotting on log transformed data
+  SEMs <- tapply(tmp[, valueCol], list(tmp$Sex, tmp$Age), se)
+  bp <- barplot(means, beside=T, yaxt="n", col=cols, ylim=5+log10(ylim), 
+                xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
+  magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+  par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
+  barplot(means, beside=T, yaxt="n", col=cols, ylim=5+log10(ylim), 
+          xlab="age (weeks)", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+  par(new=FALSE)
+  axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
+       labels=c(expression(10^-2), expression(10^-1),expression(10^0),
+                expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+  axis(1, las=2, tck=-0.02, at=c(2,5), labels=c("",""))
+  title(main=title, line=0.5)
+  arrows(bp, means+SEMs, bp, means-SEMs, lwd = 1.0, angle = 90, code = 3, length = 0.025)
+# These are now incorrect, as they are for different pairings. Need to switch to M v F, or instead have multifactoral table.
+#  text(x=2, y=sig1+5, labels=starsF[, valueCol], cex=0.9) # add significance stars
+#  text(x=5, y=sig1+5, labels=starsM[, valueCol], cex=0.9) # add significance stars
+  box()
+}
+#legend(locator(1),rownames(dat),fill=c("#ee7700","#3333ff"))
+
+
+
+# Function for barplot of +/- carriers, subdivided by sex. 
+GroupBarplot4 <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="black", title){
+  #  Makes a grouped barplot, time-points plotted together and sexes separated.
+  #  Takes plot title, name of dataframe, time-point to plot, and column number 
+  #  that contains the values to plot. 
+  tmp <- dataframe[dataframe$Week==week, ]  
+  if(ncol(tmp)==13){
+    tmp[8:13] <- log10(tmp[8:13])
+  } else if(ncol(tmp)==12){
+    tmp[8:12] <- log10(tmp[8:12])
+  } else {
+    stop("error: function only handles 13 (for BM) or 12 (for PB) columns")
+  }
+  means <- tapply(tmp[, valueCol], list(tmp$Sex, tmp$Carriers), mean, na.rm=TRUE)
+  means <- means+5 # this is to enable subzero plotting on log transformed data
+  SEMs <- tapply(tmp[, valueCol], list(tmp$Sex, tmp$Carriers), se)
+  bp <- barplot(means, beside=T, yaxt="n", col=cols, ylim=5+log10(ylim), 
+                xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
+  magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+  par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
+  barplot(means, beside=T, yaxt="n", col=cols, ylim=5+log10(ylim), 
+          xlab="accessory cells", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+  par(new=FALSE)
+  axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
+       labels=c(expression(10^-2), expression(10^-1),expression(10^0),
+                expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+  axis(1, las=2, tck=-0.02, at=c(2,5), labels=c("",""))
+  title(main=title, line=0.5)
+  arrows(bp, means+SEMs, bp, means-SEMs, lwd = 1.0, angle = 90, code = 3, length = 0.025)
+#  text(x=2, y=sig1+5, labels=starsF[, valueCol], cex=0.9) # add significance stars
+#  text(x=5, y=sig1+5, labels=starsM[, valueCol], cex=0.9) # add significance stars
+  box()
+}
+#legend(locator(1),rownames(dat),fill=c("#ee7700","#3333ff"))
+
+
+
+
+
+
+
+
+# Side by side analysis
+tmp <- BM34
+tmp[, 8:13] <- log10(tmp[, 8:13])
+# for overview, aggregated data frame returning means for numeric variables
+aggregate(tmp, by=list(tmp$Age, tmp$Carriers), FUN=mean, na.rm=TRUE) %>% print()
+# Make new column with combined variables
+tmp$group <- paste(tmp$Sex, ",", tmp$Age, ",", tmp$Carriers)
+# Change string to factor
+tmp[14] <- lapply(tmp[14], as.factor)
+plot(tmp$group, tmp$Human.Percent)
+
+means <- tmp %>% group_by(group) %>% summarise(avg=mean(Human.Percent))  
+groups <- means$group
+means[,2] <- means[,2]+5 # this is to enable subzero plotting on log transformed data
+means <- means$avg
+SEMs <-  tmp %>% group_by(group) %>% summarise(sem=se(Human.Percent))  
+SEMs <- SEMs$sem
+
+# Plot
+ylab=BMylab 
+ylim=c(0.1, 100)
+bp <- barplot(means, beside=T, yaxt="n", col="black", ylim=5+log10(ylim), 
+              xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
+arrows(bp, means+SEMs, bp, means-SEMs, lwd = 1.0, angle = 90, code = 3, length = 0.025)
+magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
+barplot(means, beside=T, yaxt="n", col="black", ylim=5+log10(ylim), 
+        xlab="group", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+par(new=FALSE)
+axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
+     labels=c(expression(10^-2), expression(10^-1),expression(10^0),
+              expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+axis(1, las=2, tck=-0.02, at=bp, labels=groups)
+title(main="CD45", line=0.5)
+box()
+
+ 
+#  text(x=2, y=sig1+5, labels=starsF[, valueCol], cex=0.9) # add significance stars
+#  text(x=5, y=sig1+5, labels=starsM[, valueCol], cex=0.9) # add significance stars
+}
+#legend(locator(1),rownames(dat),fill=c("#ee7700","#3333ff"))
+
+
+
+
+#pdf(file="./week21.pdf", width=11.5/2.54, height=8/2.54) #, family='Calibri')
+#png("figX_age_carrier_1col.png", width=(9.0*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
+pdf(file="figX_sex_age_access_1col.pdf", width=9/2.54, height=8/2.54, pointsize=8) #, family='Calibri')
+par(mfrow=c(2,3), mar=c(3.0, 3.0, 2.1, 0.8), cex=0.7, mgp=c(2,0.6,0))
+axtitledist <- 1.6  # adjusts distance of x and y axis titles 
+sig1 <- log10(85)
+sig2 <- log10(85)
+cols3 <- c("#ee7700","#3333ff")  # colours for bar plots
+cols4 <- c("orange","yellow")  # colours for bar plots
+cols5 <- c("purple4","green4")  # colours for bar plots 
+cols6 <- c("#1b9e77","#7570b3")  # colours for bar plots 
+
+# BM
+weeks <- c(20)
+
+# Age
+## stats
+### females
+dat <- BM34
+dat <- dat[dat$Sex=="F", ]
+dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
+lineages <- names(dat[8:ncol(dat)])
+out <- NULL
+for (l in lineages){
+  lin <- NULL
+  for (w in weeks){
+    tmp <- (t.test(dat[dat$Age=="young" & dat$Week==w, l], 
+                   dat[dat$Age=="old" & dat$Week==w, l], var.equal = FALSE))
+    lin <- c(lin, tmp$p.value)
+  }
+  out <- cbind(out, lin) 
+}
+colnames(out) <- lineages
+rownames(out) <- weeks
+print(out) 
+stars <- p2stars(out)
+# Workaround: adds 7 columns to the right so that my previously made valueCol script works: 
+starsF <- cbind(matrix(NA,1,7), stars)
+### males
+dat <- BM34
+dat <- dat[dat$Sex=="M", ]
+dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
+lineages <- names(dat[8:ncol(dat)])
+out <- NULL
+for (l in lineages){
+  lin <- NULL
+  for (w in weeks){
+    tmp <- (t.test(dat[dat$Age=="young" & dat$Week==w, l], 
+                   dat[dat$Age=="old" & dat$Week==w, l], var.equal = FALSE))
+    lin <- c(lin, tmp$p.value)
+  }
+  out <- cbind(out, lin) 
+}
+colnames(out) <- lineages
+rownames(out) <- weeks
+print(out) 
+stars <- p2stars(out)
+# Workaround: adds 7 columns to the right so that my previously made valueCol script works: 
+starsM <- cbind(matrix(NA,1,7), stars)
+## plots
+GroupBarplot2(BM34, week=weeks, valueCol=8,  cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="CD45")
+GroupBarplot2(BM34, week=weeks, valueCol=10, cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="B Lymphoid")
+GroupBarplot2(BM34, week=weeks, valueCol=9,  cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="GM")
+
+
+# Carriers
+## stats
+### females
+dat <- BM34
+dat <- dat[dat$Sex=="F", ]
+dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
+lineages <- names(dat[8:ncol(dat)])
+out <- NULL
+for (l in lineages){
+  lin <- NULL
+  for (w in weeks){
+    tmp <- (t.test(dat[dat$Carriers=="no" & dat$Week==w, l], 
+                   dat[dat$Carriers=="yes" & dat$Week==w, l], var.equal = FALSE))
+    lin <- c(lin, tmp$p.value)
+  }
+  out <- cbind(out, lin) 
+}
+colnames(out) <- lineages
+rownames(out) <- weeks
+print(out) 
+stars <- p2stars(out)
+# Workaround: adds 7 columns to the right so that my previously made valueCol script works: 
+starsF <- cbind(matrix(NA,1,7), stars)
+### males
+dat <- BM34
+dat <- dat[dat$Sex=="M", ]
+dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
+lineages <- names(dat[8:ncol(dat)])
+out <- NULL
+for (l in lineages){
+  lin <- NULL
+  for (w in weeks){
+    tmp <- (t.test(dat[dat$Carriers=="no" & dat$Week==w, l], 
+                   dat[dat$Carriers=="yes" & dat$Week==w, l], var.equal = FALSE))
+    lin <- c(lin, tmp$p.value)
+  }
+  out <- cbind(out, lin) 
+}
+colnames(out) <- lineages
+rownames(out) <- weeks
+print(out) 
+stars <- p2stars(out)
+# Workaround: adds 7 columns to the right so that my previously made valueCol script works: 
+starsM <- cbind(matrix(NA,1,7), stars)
+## plots
+GroupBarplot4(BM34, week=weeks, valueCol=8,  cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="CD45")
+GroupBarplot4(BM34, week=weeks, valueCol=10, cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="B Lymphoid")
+GroupBarplot4(BM34, week=weeks, valueCol=9,  cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="GM")
+
+dev.off()
+
+# Multifactorial Stats #
+tmp <- BM34
+tmp <- tmp[, c(3,4,7,8:10,12)]
+table(apply(tmp[,1:3], 1, function(x){paste(x,collapse=",")}))
+# 3-way factorial anova, 2 levels max:
+# help from statmethods.net/stats/anova.html 
+# & http://goanna.cs.rmit.edu.au/~fscholer/anova.php
+CD45 <- aov(Human.Percent ~ Sex + Age + Carriers 
+           + Sex:Age + Sex:Carriers + Age:Carriers, data=tmp)
+CD19 <- aov(CD19.Percent ~ Sex + Age + Carriers 
+           + Sex:Age + Sex:Carriers + Age:Carriers, data=tmp)
+GM <- aov(CD33.Percent ~ Sex + Age + Carriers 
+           + Sex:Age + Sex:Carriers + Age:Carriers, data=tmp)
+# Need type 3 because unbalanced design:
+# drop1(fit,~.,test="F") # does same as below
+out <- Anova(CD45, type="III") 
+write.csv(out, file="ANOVA_CD45.csv")
+out <- Anova(CD19, type="III") 
+write.csv(out, file="ANOVA_CD19.csv")
+out <- Anova(GM,   type="III") 
+write.csv(out, file="ANOVA_GM.csv")
+
+# I read that having contrasts is important, but it gives the same result
+# Repeated here, but with contrasts, and consdensed into one formula. 
+Anova(lm(Human.Percent ~ Sex + Carriers + Age + 
+         Sex:Carriers + Sex:Age + Carriers:Age,
+         data=tmp, 
+         contrasts=list(Sex=contr.sum, Carriers=contr.sum, Age=contr.sum)), 
+         type=3)
+
+
+
+
+
+
+
+
+
+
+
+
 ##### NRG versus NRG-W41 #####
 
 ##### BM #####
@@ -656,495 +1145,6 @@ GroupBarplot(PBi, week=20, valueCol=10, cols=cols3, ylab=PBylab, ylim=c(1, 1000)
 GroupBarplot(PBi, week=20, valueCol=12, cols=cols3, ylab=PBylab, ylim=c(10, 10000), title="Platelets")
 #dev.off()
 # end of unused section
-
-
-
-
-
-##### NSG versus NRG #####
-##### BM #####
-
-BM <- read.csv("../NSGvsNRG/C_BM kinetics.csv", colClasses=c(Sex="factor"))
-# Adjust time-points so that BMa can be pooled:
-BM$Week[BM$Week==24] <- 20
-BM$Week[BM$Week==8] <- 10 
-BM <- BM[!(BM$Week==17),] #remove week 17
-# Change low values in leukocyte columns to detection threshold
-BM[,8:13][BM[,8:13] < 0.01] <- 0.01  
-#Change irradiation doses to enable merge
-levels(BM$Irradiation.Dose)[levels(BM$Irradiation.Dose)=="250 Rad"] <- "Irradiated" 
-levels(BM$Irradiation.Dose)[levels(BM$Irradiation.Dose)=="800 Rad"] <- "Irradiated"
-levels(BM$Irradiation.Dose)[levels(BM$Irradiation.Dose)=="315 Rad"] <- "Irradiated" 
-levels(BM$Irradiation.Dose)[levels(BM$Irradiation.Dose)=="900 Rad"] <- "Irradiated"
-
-##### PB #####
-
-PB <- read.csv("../NSGvsNRG/C_PB kinetics.csv", colClasses=c(Sex="factor"))
-# Adjust time-points so that BMa can be pooled:
-PB$Week[PB$Week==24] <- 20
-PB$Week[PB$Week==8] <- 10 
-PB <- PB[!(PB$Week==17),] #remove week 17
-# Change low values in leukocyte & platelet columns to detection threshold
-PB[,8:11][PB[,8:11] < 0.2] <- 0.2 
-PB[,12][PB[,12] < 25] <- 25 
-#Change irradiation doses to enable merge
-levels(PB$Irradiation.Dose)[levels(PB$Irradiation.Dose)=="250 Rad"] <- "Irradiated" 
-levels(PB$Irradiation.Dose)[levels(PB$Irradiation.Dose)=="800 Rad"] <- "Irradiated"
-levels(PB$Irradiation.Dose)[levels(PB$Irradiation.Dose)=="315 Rad"] <- "Irradiated" 
-levels(PB$Irradiation.Dose)[levels(PB$Irradiation.Dose)=="900 Rad"] <- "Irradiated"
-
-#Statistics
-dat <- BM
-dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
-weeks <- c(3,6,10,20,30)
-lineages <- names(dat[8:ncol(dat)])
-lineages <- lineages[c(1:4, 6)]
-out <- NULL
-for (l in lineages){
-  lin <- NULL
-  for (w in weeks){
-    tmp <- (t.test(dat[dat$Strain=="NSG" & dat$Week==w, l], 
-                   dat[dat$Strain=="NRG" & dat$Week==w, l], var.equal = FALSE))
-    lin <- c(lin, tmp$p.value)
-  }
-  out <- cbind(out, lin) 
-}
-colnames(out) <- lineages
-rownames(out) <- weeks
-print(out)
-BMstars <- p2stars(out)
-
-dat <- PB
-dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
-weeks <- c(3,6,10,20,30)
-lineages <- names(dat[8:ncol(dat)])
-lineages <- lineages[c(1:3, 5)]
-out <- NULL
-for (l in lineages){
-  lin <- NULL
-  for (w in weeks){
-    tmp <- (t.test(dat[dat$Strain=="NSG" & dat$Week==w, l], 
-                   dat[dat$Strain=="NRG" & dat$Week==w, l], var.equal = FALSE))
-    lin <- c(lin, tmp$p.value)
-  }
-  out <- cbind(out, lin) 
-}
-colnames(out) <- lineages
-rownames(out) <- weeks
-print(out) 
-PBstars <- p2stars(out)
-
-# Do a separate t.test for PB CD19 w3 to check things
-tmp <- PB[PB$Week==3 ,c(3,10)]
-tmp[,2] <- log10(tmp[,2])
-NSG <- tmp[tmp$Strain=="NSG", 2]
-NRG <- tmp[tmp$Strain=="NRG", 2]
-t.test(NSG, NRG, var.equal = FALSE)
-
-# Kinetics plots
-# Function for NSG verus NRG plots:
-KineticsPlot2 <- function(dataframe, lineage="CD45.Percent", ylab, ylim, xlim=c(2,31), 
-                          lty=1, cols="black", pcex=1, lcex=1, title, sig){
-  #  Makes a grouped lineplot, with strains plotted together and sexes separated.
-  #  Takes plot title, name of dataframe, and column number with values. 
-  #  Data is log10 transformed for mean and SEM calculation. 
-  #  Requires dplyr and reshape. 
-  tmp <- melt(dataframe, id.vars=c("Exp", "Week", "Strain", "Sex", "Irradiation.Dose", "Input", "Mouse"))
-  tmp[9] <- log10(tmp[9])
-  tmp <- tmp[tmp$variable==lineage, ]
-  tmp <- dplyr::summarise(group_by(tmp, Week, Strain, variable), mean=mean(value, na.rm=TRUE), se=se(value))
-  plot(tmp$mean ~ tmp$Week, type="n", axes=F,  ylim=log10(ylim), xlim=xlim, col=tmp$Strain,
-       xlab="weeks post-transplant", ylab=ylab, mgp=c(axtitledist,0.5,0))
-  text(x = unique(tmp$Week), y=sig, labels=stars[ ,lineage] , cex=0.9) #paste("p=",round(PLT$p.value,2))
-  sep1 <- tmp[tmp$Strain=="NRG", ]
-  sep1$Week <- sep1$Week + (vAdj/1)
-  sep2 <- tmp[tmp$Strain=="NSG", ]
-  sep2$Week <- sep2$Week + (vAdj/2)
-  arrows(sep1$Week, sep1$mean+sep1$se, sep1$Week, sep1$mean-sep1$se, col=c(cols[1]), 
-         lwd = 1.5, angle = 90, code = 3, length = 0.02) 
-  arrows(sep2$Week, sep2$mean+sep2$se, sep2$Week, sep2$mean-sep2$se, col=c(cols[1]), 
-         lwd = 1.5, angle = 90, code = 3, length = 0.02) 
-  points(sep1$mean ~ sep1$Week, cex=pcex, pch=pchs1[1], col=cols[1]) 
-  points(sep2$mean ~ sep2$Week, cex=pcex, pch=pchs1[2], col=cols[1]) 
-  lines(sep1$mean ~ sep1$Week, cex=lcex, lty=lty, col=cols[1])
-  lines(sep2$mean ~ sep2$Week, cex=lcex, lty=lty, col=cols[1])
-  magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
-  axis(side=1, at=c(3, 6, 10, 20, 30),  mgp=c(0.8,0.4,0), cex=0.8, tck=-0.03)
-  axis(side=1, at=6, labels=6, mgp=c(0.8,0.4,0), cex=0.8, tck=-0.03) # to add missing 6
-  axis(2, las=2, mgp=c(2.5,1.7,0), tck=-0.01, hadj=0, at=c(-2, -1, 0, 1, 2, 3, 4, 5), 
-       labels=c(expression(10^-2), expression(10^-1),expression(10^0),expression(10^1),
-                expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
-  title(main=title, line=0.5)
-  box()
-}
-
-xlim <- c(1.5, 30.5)   # X-axis range
-lcols <- c("#000000","#CD0000")  # line colors
-lty <- 1    # linetype (1=solid, 2=dash, 3=dotted)
-pchs1 <- c(16,1)
-
-#png("figX_NSG_NRG_1.5col.png", width=(14.0*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
-pdf(file="figX_NSG_NRG_1.5col.pdf", width=14/2.54, height=8/2.54, pointsize=8) #, family='Calibri')
-par(mfrow=c(2,4), mar=c(3.2, 2.9, 2, 0.8), cex=0.7, mgp=c(2,0.6,0))
-
-# BM
-stars <- BMstars
-KineticsPlot2(BM, lineage="CD45.Percent",    ylab=BMylab, ylim=c(1, 100), xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45", sig=2)
-KineticsPlot2(BM, lineage="CD19.Percent",    ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid", sig=2)
-KineticsPlot2(BM, lineage="CD33.15.Percent", ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM", sig=2)
-KineticsPlot2(BM, lineage="GPA.Percent",     ylab=BMylab, ylim=c(0.1, 100),  xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GPA", sig=2)
-# PB
-stars <- PBstars
-KineticsPlot2(PB, lineage="CD45",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="CD45", sig=3)
-KineticsPlot2(PB, lineage="CD19",      ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="B lymphoid", sig=3)
-KineticsPlot2(PB, lineage="CD33.15",   ylab=PBylab, ylim=c(0.3, 1000), xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="GM", sig=3)
-KineticsPlot2(PB, lineage="Platelets", ylab=PBylab, ylim=c(30, 10000), xlim=xlim, 
-             cols=lcols, pcex=pcex, lcex=lcex, lty=lty, title="Platelets", sig=4)
-dev.off()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-##### Old Age #####
-##### BM #####
-tmp <- read.csv("../old_age/OldAge1_BM.csv", strip.white=TRUE)  #, colClasses=c(Mouse="character"))
-Exp <- rep("OldAge1", nrow(tmp))
-tmp <- cbind(Exp, tmp)
-BM1 <- tmp[c(1,6, 7:11, 22:27)]
-
-tmp <- read.csv("../old_age/OldAge2_BM.csv", strip.white=TRUE)  #, colClasses=c(Mouse="character"))
-Exp <- rep("OldAge2", nrow(tmp))
-tmp <- cbind(Exp, tmp)
-BM2 <- tmp[c(1,6, 7:11, 22:27)]
-
-# Adjust time-points so that BMa can be pooled:
-BM2$Week <- round(BM2$Week, digits=0)
-BM2$Week[BM2$Week==21] <- 20
-BM2$Week[BM2$Week==25] <- 20
-
-
-# Merge experiment 1 & 2:
-BM <- rbind(BM1, BM2)
-
-# Make codes the same:
-BM$Age[BM$Age=="O"] <- "Old"
-BM$Age[BM$Age=="Y"] <- "Young"
-levels(BM$Age)[levels(BM$Age)=="Old"] <- "21-25"
-levels(BM$Age)[levels(BM$Age)=="Young"] <- "8-12"
-BM$Carriers[BM$Carriers=="N"] <- "no"
-BM$Carriers[BM$Carriers=="Y"] <- "yes"
-BM <- droplevels(BM)
-# reorder factor levels:
-BM$Age <- factor(BM$Age,levels(BM$Age)[c(2,1)])
-#print(levels(BM$Age))
-
-# Change low values in leukocyte columns to detection threshold
-BM[,8:13][BM[,8:13] < 0.01] <- 0.01  
-
-# Select Data
-BM34 <- BM[BM$Cell.type=="CD34+" ,]
-BM34 <- BM34[BM34$Week==20, ]
-#BM49f50 <- BM[BM$Cell.type=="50 49f+" ,]
-#BM49f60 <- BM[BM$Cell.type=="60 49f+" ,]
-#BM49f <- rbind(BM49f50, BM49f60)
-
-# Function for barplot of Old versus Young, subdivided by Sex.
-GroupBarplot2 <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="black", title){
-  #  Makes a grouped barplot, time-points plotted together and sexes separated.
-  #  Takes plot title, name of dataframe, time-point to plot, and column number 
-  #  that contains the values to plot. 
-  tmp <- dataframe[dataframe$Week==week, ]  
-  if(ncol(tmp)==13){
-    tmp[8:13] <- log10(tmp[8:13])
-  } else if(ncol(tmp)==12){
-    tmp[8:12] <- log10(tmp[8:12])
-  } else {
-    stop("error: function only handles 13 (for BM) or 12 (for PB) columns")
-  }
-  means <- tapply(tmp[, valueCol], list(tmp$Sex, tmp$Age), mean, na.rm=TRUE)
-  print(means)
-  means <- means+5 # this is to enable subzero plotting on log transformed data
-  SEMs <- tapply(tmp[, valueCol], list(tmp$Sex, tmp$Age), se)
-  bp <- barplot(means, beside=T, yaxt="n", col=cols, ylim=5+log10(ylim), 
-                xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
-  magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
-  par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
-  barplot(means, beside=T, yaxt="n", col=cols, ylim=5+log10(ylim), 
-          xlab="age (weeks)", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
-  par(new=FALSE)
-  axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
-       labels=c(expression(10^-2), expression(10^-1),expression(10^0),
-                expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
-  axis(1, las=2, tck=-0.02, at=c(2,5), labels=c("",""))
-  title(main=title, line=0.5)
-  arrows(bp, means+SEMs, bp, means-SEMs, lwd = 1.0, angle = 90, code = 3, length = 0.025)
-# These are now incorrect, as they are for different pairings. Need to switch to M v F, or instead have multifactoral table.
-#  text(x=2, y=sig1+5, labels=starsF[, valueCol], cex=0.9) # add significance stars
-#  text(x=5, y=sig1+5, labels=starsM[, valueCol], cex=0.9) # add significance stars
-  box()
-}
-#legend(locator(1),rownames(dat),fill=c("#ee7700","#3333ff"))
-
-
-
-# Function for barplot of +/- carriers, subdivided by sex. 
-GroupBarplot4 <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="black", title){
-  #  Makes a grouped barplot, time-points plotted together and sexes separated.
-  #  Takes plot title, name of dataframe, time-point to plot, and column number 
-  #  that contains the values to plot. 
-  tmp <- dataframe[dataframe$Week==week, ]  
-  if(ncol(tmp)==13){
-    tmp[8:13] <- log10(tmp[8:13])
-  } else if(ncol(tmp)==12){
-    tmp[8:12] <- log10(tmp[8:12])
-  } else {
-    stop("error: function only handles 13 (for BM) or 12 (for PB) columns")
-  }
-  means <- tapply(tmp[, valueCol], list(tmp$Sex, tmp$Carriers), mean, na.rm=TRUE)
-  means <- means+5 # this is to enable subzero plotting on log transformed data
-  SEMs <- tapply(tmp[, valueCol], list(tmp$Sex, tmp$Carriers), se)
-  bp <- barplot(means, beside=T, yaxt="n", col=cols, ylim=5+log10(ylim), 
-                xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
-  magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
-  par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
-  barplot(means, beside=T, yaxt="n", col=cols, ylim=5+log10(ylim), 
-          xlab="accessory cells", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
-  par(new=FALSE)
-  axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
-       labels=c(expression(10^-2), expression(10^-1),expression(10^0),
-                expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
-  axis(1, las=2, tck=-0.02, at=c(2,5), labels=c("",""))
-  title(main=title, line=0.5)
-  arrows(bp, means+SEMs, bp, means-SEMs, lwd = 1.0, angle = 90, code = 3, length = 0.025)
-#  text(x=2, y=sig1+5, labels=starsF[, valueCol], cex=0.9) # add significance stars
-#  text(x=5, y=sig1+5, labels=starsM[, valueCol], cex=0.9) # add significance stars
-  box()
-}
-#legend(locator(1),rownames(dat),fill=c("#ee7700","#3333ff"))
-
-
-
-
-
-
-
-
-# Side by side analysis
-tmp <- BM34
-tmp[, 8:13] <- log10(tmp[, 8:13])
-# for overview, aggregated data frame returning means for numeric variables
-aggregate(tmp, by=list(tmp$Age, tmp$Carriers), FUN=mean, na.rm=TRUE) %>% print()
-# Make new column with combined variables
-tmp$group <- paste(tmp$Sex, ",", tmp$Age, ",", tmp$Carriers)
-# Change string to factor
-tmp[14] <- lapply(tmp[14], as.factor)
-plot(tmp$group, tmp$Human.Percent)
-
-means <- tmp %>% group_by(group) %>% summarise(avg=mean(Human.Percent))  
-groups <- means$group
-means[,2] <- means[,2]+5 # this is to enable subzero plotting on log transformed data
-means <- means$avg
-SEMs <-  tmp %>% group_by(group) %>% summarise(sem=se(Human.Percent))  
-SEMs <- SEMs$sem
-
-# Plot
-ylab=BMylab 
-ylim=c(0.1, 100)
-bp <- barplot(means, beside=T, yaxt="n", col="black", ylim=5+log10(ylim), 
-              xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
-arrows(bp, means+SEMs, bp, means-SEMs, lwd = 1.0, angle = 90, code = 3, length = 0.025)
-magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
-par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
-barplot(means, beside=T, yaxt="n", col="black", ylim=5+log10(ylim), 
-        xlab="group", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
-par(new=FALSE)
-axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
-     labels=c(expression(10^-2), expression(10^-1),expression(10^0),
-              expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
-axis(1, las=2, tck=-0.02, at=bp, labels=groups)
-title(main="CD45", line=0.5)
-box()
-
- 
-#  text(x=2, y=sig1+5, labels=starsF[, valueCol], cex=0.9) # add significance stars
-#  text(x=5, y=sig1+5, labels=starsM[, valueCol], cex=0.9) # add significance stars
-}
-#legend(locator(1),rownames(dat),fill=c("#ee7700","#3333ff"))
-
-
-
-
-#pdf(file="./week21.pdf", width=11.5/2.54, height=8/2.54) #, family='Calibri')
-#png("figX_age_carrier_1col.png", width=(9.0*ppi)/2.54, height=(8*ppi)/2.54, res=ppi, pointsize=8)
-pdf(file="figX_sex_age_access_1col.pdf", width=9/2.54, height=8/2.54, pointsize=8) #, family='Calibri')
-par(mfrow=c(2,3), mar=c(3.0, 3.0, 2.1, 0.8), cex=0.7, mgp=c(2,0.6,0))
-axtitledist <- 1.6  # adjusts distance of x and y axis titles 
-sig1 <- log10(85)
-sig2 <- log10(85)
-cols3 <- c("#ee7700","#3333ff")  # colours for bar plots
-cols4 <- c("orange","yellow")  # colours for bar plots
-cols5 <- c("purple4","green4")  # colours for bar plots 
-cols6 <- c("#1b9e77","#7570b3")  # colours for bar plots 
-
-# BM
-weeks <- c(20)
-
-# Age
-## stats
-### females
-dat <- BM34
-dat <- dat[dat$Sex=="F", ]
-dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
-lineages <- names(dat[8:ncol(dat)])
-out <- NULL
-for (l in lineages){
-  lin <- NULL
-  for (w in weeks){
-    tmp <- (t.test(dat[dat$Age=="young" & dat$Week==w, l], 
-                   dat[dat$Age=="old" & dat$Week==w, l], var.equal = FALSE))
-    lin <- c(lin, tmp$p.value)
-  }
-  out <- cbind(out, lin) 
-}
-colnames(out) <- lineages
-rownames(out) <- weeks
-print(out) 
-stars <- p2stars(out)
-# Workaround: adds 7 columns to the right so that my previously made valueCol script works: 
-starsF <- cbind(matrix(NA,1,7), stars)
-### males
-dat <- BM34
-dat <- dat[dat$Sex=="M", ]
-dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
-lineages <- names(dat[8:ncol(dat)])
-out <- NULL
-for (l in lineages){
-  lin <- NULL
-  for (w in weeks){
-    tmp <- (t.test(dat[dat$Age=="young" & dat$Week==w, l], 
-                   dat[dat$Age=="old" & dat$Week==w, l], var.equal = FALSE))
-    lin <- c(lin, tmp$p.value)
-  }
-  out <- cbind(out, lin) 
-}
-colnames(out) <- lineages
-rownames(out) <- weeks
-print(out) 
-stars <- p2stars(out)
-# Workaround: adds 7 columns to the right so that my previously made valueCol script works: 
-starsM <- cbind(matrix(NA,1,7), stars)
-## plots
-GroupBarplot2(BM34, week=weeks, valueCol=8,  cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="CD45")
-GroupBarplot2(BM34, week=weeks, valueCol=10, cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="B Lymphoid")
-GroupBarplot2(BM34, week=weeks, valueCol=9,  cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="GM")
-
-
-# Carriers
-## stats
-### females
-dat <- BM34
-dat <- dat[dat$Sex=="F", ]
-dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
-lineages <- names(dat[8:ncol(dat)])
-out <- NULL
-for (l in lineages){
-  lin <- NULL
-  for (w in weeks){
-    tmp <- (t.test(dat[dat$Carriers=="no" & dat$Week==w, l], 
-                   dat[dat$Carriers=="yes" & dat$Week==w, l], var.equal = FALSE))
-    lin <- c(lin, tmp$p.value)
-  }
-  out <- cbind(out, lin) 
-}
-colnames(out) <- lineages
-rownames(out) <- weeks
-print(out) 
-stars <- p2stars(out)
-# Workaround: adds 7 columns to the right so that my previously made valueCol script works: 
-starsF <- cbind(matrix(NA,1,7), stars)
-### males
-dat <- BM34
-dat <- dat[dat$Sex=="M", ]
-dat[8:ncol(dat)] <- log10(dat[8:ncol(dat)])
-lineages <- names(dat[8:ncol(dat)])
-out <- NULL
-for (l in lineages){
-  lin <- NULL
-  for (w in weeks){
-    tmp <- (t.test(dat[dat$Carriers=="no" & dat$Week==w, l], 
-                   dat[dat$Carriers=="yes" & dat$Week==w, l], var.equal = FALSE))
-    lin <- c(lin, tmp$p.value)
-  }
-  out <- cbind(out, lin) 
-}
-colnames(out) <- lineages
-rownames(out) <- weeks
-print(out) 
-stars <- p2stars(out)
-# Workaround: adds 7 columns to the right so that my previously made valueCol script works: 
-starsM <- cbind(matrix(NA,1,7), stars)
-## plots
-GroupBarplot4(BM34, week=weeks, valueCol=8,  cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="CD45")
-GroupBarplot4(BM34, week=weeks, valueCol=10, cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="B Lymphoid")
-GroupBarplot4(BM34, week=weeks, valueCol=9,  cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="GM")
-
-dev.off()
-
-# Multifactorial Stats #
-tmp <- BM34
-tmp <- tmp[, c(3,4,7,8:10,12)]
-table(apply(tmp[,1:3], 1, function(x){paste(x,collapse=",")}))
-# 3-way factorial anova, 2 levels max:
-# help from statmethods.net/stats/anova.html 
-# & http://goanna.cs.rmit.edu.au/~fscholer/anova.php
-CD45 <- aov(Human.Percent ~ Sex + Age + Carriers 
-           + Sex:Age + Sex:Carriers + Age:Carriers, data=tmp)
-CD19 <- aov(CD19.Percent ~ Sex + Age + Carriers 
-           + Sex:Age + Sex:Carriers + Age:Carriers, data=tmp)
-GM <- aov(CD33.Percent ~ Sex + Age + Carriers 
-           + Sex:Age + Sex:Carriers + Age:Carriers, data=tmp)
-# Need type 3 because unbalanced design:
-# drop1(fit,~.,test="F") # does same as below
-out <- Anova(CD45, type="III") 
-write.csv(out, file="ANOVA_CD45.csv")
-out <- Anova(CD19, type="III") 
-write.csv(out, file="ANOVA_CD19.csv")
-out <- Anova(GM,   type="III") 
-write.csv(out, file="ANOVA_GM.csv")
-
-# I read that having contrasts is important, but it gives the same result
-# Repeated here, but with contrasts, and consdensed into one formula. 
-Anova(lm(Human.Percent ~ Sex + Carriers + Age + 
-         Sex:Carriers + Sex:Age + Carriers:Age,
-         data=tmp, 
-         contrasts=list(Sex=contr.sum, Carriers=contr.sum, Age=contr.sum)), 
-         type=3)
-
-
-
-
-
-
-
-
-
 
 
 
