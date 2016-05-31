@@ -296,6 +296,499 @@ BM34 <- BM34[BM34$Week==20, ]
 #BM49f60 <- BM[BM$Cell.type=="60 49f+" ,]
 #BM49f <- rbind(BM49f50, BM49f60)
 
+# Side by side analysis
+tmp <- BM34
+tmp[, 8:13] <- log10(tmp[, 8:13])
+# for overview, aggregated data frame returning means for numeric variables
+#aggregate(tmp, by=list(tmp$Age, tmp$Carriers), FUN=mean, na.rm=TRUE) %>% print()
+# Make new column with combined variables
+tmp$group <- paste(tmp$Sex, tmp$Age, tmp$Carriers, sep=", ")
+# Change string to factor
+tmp[14] <- lapply(tmp[14], as.factor)
+tmp$group <- factor(tmp$group, levels = c("F, 8-12, no", "F, 21-25, no", "F, 8-12, yes", 
+                           "M, 8-12, no", "M, 21-25, no", "M, 8-12, yes", "M, 21-25, yes"))
+plot(tmp$group, tmp$Human.Percent)
+
+
+# Global parameters:
+cols7 <- c(rep("#ee7700",3), rep("#3333ff",4))
+ylab=BMylab 
+ylim=c(0.1, 100)
+xa1 <- 2.20
+xa2 <- 2.50
+xa3 <- 2.80
+pdf(file="tmp_figX_sex_age_access_1col.pdf", width=9/2.54, height=15/2.54, pointsize=8) #, family='Calibri')
+par(mfrow=c(3,1), mar=c(5.0, 5.5, 2.5, 3.0), cex=0.7, mgp=c(2,0.6,0))
+
+# CD45
+means <- tmp %>% group_by(group) %>% summarise(avg=mean(Human.Percent))  %>% print()
+groups <- means$group
+groups <- as.character(groups)
+groups <- strsplit(groups, ", ")
+sexLab <- sapply(groups, function(x) x[1])
+ageLab <- sapply(groups, function(x) x[2])
+carLab <- sapply(groups, function(x) x[3])
+means <- means$avg
+sems <-  tmp %>% group_by(group) %>% summarise(sem=se(Human.Percent))  
+sems <- sems$sem
+bp <- barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), # +5 circumvents subzero plotting
+              xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
+magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
+barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), 
+        xlab="", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+arrows(bp, means+5+sems, bp, means+5-sems, lwd = 1.0, angle = 90, code = 3, length = 0.025)
+par(new=FALSE)
+axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
+     labels=c(expression(10^-2), expression(10^-1),expression(10^0),
+              expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+axis(1, las=1, tck=-0.02, at=bp, labels=rep("",7))
+text(x=bp, y=log10(10)+5-xa1, labels=sexLab, xpd=TRUE)
+text(x=bp, y=log10(10)+5-xa2, labels=ageLab, xpd=TRUE)
+text(x=bp, y=log10(10)+5-xa3, labels=carLab, xpd=TRUE)
+title(main="CD45", line=0.5)
+par(new=FALSE)
+box()
+#  text(x=2, y=sig1+5, labels=starsF[, valueCol], cex=0.9) # add significance stars
+#  text(x=5, y=sig1+5, labels=starsM[, valueCol], cex=0.9) # add significance stars
+#legend(locator(1),rownames(dat),fill=c("#ee7700","#3333ff"))
+
+# CD19
+means <- tmp %>% group_by(group) %>% summarise(avg=mean(CD19.Percent))  %>% print()
+means <- means$avg
+sems <-  tmp %>% group_by(group) %>% summarise(sem=se(CD19.Percent))  
+sems <- sems$sem
+ylab=BMylab 
+ylim=c(0.1, 100)
+bp <- barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), # +5 circumvents subzero plotting
+              xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
+magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
+barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), 
+        xlab="", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+arrows(bp, means+5+sems, bp, means+5-sems, lwd = 1.0, angle = 90, code = 3, length = 0.025)
+axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
+     labels=c(expression(10^-2), expression(10^-1),expression(10^0),
+              expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+axis(1, las=1, tck=-0.02, at=bp, labels=rep("",7))
+text(x=bp, y=log10(10)+5-xa1, labels=sexLab, xpd=TRUE)
+text(x=bp, y=log10(10)+5-xa2, labels=ageLab, xpd=TRUE)
+text(x=bp, y=log10(10)+5-xa3, labels=carLab, xpd=TRUE)
+title(main="B Lymphoid", line=0.5)
+par(new=FALSE)
+box()
+
+# GM
+means <- tmp %>% group_by(group) %>% summarise(avg=mean(CD33.Percent))  %>% print()
+means <- means$avg
+sems <-  tmp %>% group_by(group) %>% summarise(sem=se(CD33.Percent))  
+sems <- sems$sem
+bp <- barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), # +5 circumvents subzero plotting
+              xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
+magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
+barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), 
+        xlab="", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+arrows(bp, means+5+sems, bp, means+5-sems, lwd = 1.0, angle = 90, code = 3, length = 0.025)
+axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
+     labels=c(expression(10^-2), expression(10^-1),expression(10^0),
+              expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+axis(1, las=1, tck=-0.02, at=bp, labels=rep("",7))
+text(x=bp, y=log10(10)+5-xa1, labels=sexLab, xpd=TRUE)
+text(x=bp, y=log10(10)+5-xa2, labels=ageLab, xpd=TRUE)
+text(x=bp, y=log10(10)+5-xa3, labels=carLab, xpd=TRUE)
+title(main="GM", line=0.5)
+par(new=FALSE)
+box()
+dev.off()
+
+
+
+
+###### PB ######
+dat <- read.csv("../old_age/OldAge1_PB.csv")
+# Make codes the same:
+levels(dat$Age)[levels(dat$Age)=="O"] <- "21-25"
+levels(dat$Age)[levels(dat$Age)=="Y"] <- "8-12"
+levels(dat$Carriers)[levels(dat$Carriers)=="Y"] <- "yes"
+levels(dat$Carriers)[levels(dat$Carriers)=="N"] <- "no"
+dat <- droplevels(dat)
+# reorder factor levels:
+dat$Age <- factor(dat$Age,levels(dat$Age)[c(2,1)])
+#print(levels(dat$Age))
+# Change from per mL to per uL (x10^3/mL)
+dat[, 11:15] <- dat[, 11:15] / 1000
+
+# Change low values in leukocyte columns to detection threshold
+dat[,11:14][dat[,11:14] < 0.2] <- 0.2 
+dat[,15][dat[,15] < 25] <- 25 
+# Log transform
+dat[, 11:15] <- log10(dat[, 11:15])
+
+# Global parameters:
+cols7 <- c(rep("#ee7700",2), rep("#3333ff",3))
+ylab=PBylab 
+ylim=c(0.2, 200)
+xa1 <- 2.0
+xa2 <- 2.30
+xa3 <- 2.60
+xap1 <- 0.2
+xap2 <- 0.4
+xap3 <- 0.6
+pdf(file="figX_sex_age_access_PB_1col.pdf", width=9/2.54, height=15/2.54, pointsize=6.8) #, family='Calibri')
+par(mfcol=c(4,3), mar=c(5, 3.0, 2, 0.3), cex=0.7, mgp=c(2,0.6,0))
+
+
+## Week 3 ##
+tmp <- dat
+tmp <- tmp[tmp$Week==3, ]
+# Make new column with combined variables
+tmp$group <- paste(tmp$Sex, tmp$Age, tmp$Carriers, sep=", ")
+# Change string to factor
+tmp[17] <- lapply(tmp[17], as.factor)
+tmp$group <- factor(tmp$group, levels = c("F, 8-12, no", "F, 8-12, yes", 
+                                          "M, 8-12, no", "M, 8-12, yes", "M, 21-25, yes"))
+#plot(tmp$group, tmp$Human)
+
+# CD45
+means <- tmp %>% group_by(group) %>% summarise(avg=mean(Human))  %>% print()
+groups <- means$group
+groups <- as.character(groups)
+groups <- strsplit(groups, ", ")
+sexLab <- sapply(groups, function(x) x[1])
+ageLab <- sapply(groups, function(x) x[2])
+carLab <- sapply(groups, function(x) x[3])
+means <- means$avg
+sems <-  tmp %>% group_by(group) %>% summarise(sem=se(Human))  
+sems <- sems$sem
+bp <- barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), # +5 circumvents subzero plotting
+              xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
+magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
+barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), 
+        xlab="", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+arrows(bp, means+5+sems, bp, means+5-sems, lwd = 1.0, angle = 90, code = 3, length = 0.025)
+axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
+     labels=c(expression(10^-2), expression(10^-1),expression(10^0),
+              expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+axis(1, las=1, tck=-0.02, at=bp, labels=rep("",5))
+text(x=bp, y=log10(10)+5-xa1, labels=sexLab, xpd=TRUE)
+text(x=bp, y=log10(10)+5-xa2, labels=ageLab, xpd=TRUE)
+text(x=bp, y=log10(10)+5-xa3, labels=carLab, xpd=TRUE)
+title(main="CD45", line=0.5)
+box()
+par(new=FALSE)
+
+# CD19
+means <- tmp %>% group_by(group) %>% summarise(avg=mean(CD19))  %>% print()
+means <- means$avg
+sems <-  tmp %>% group_by(group) %>% summarise(sem=se(CD19))  
+sems <- sems$sem
+bp <- barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), # +5 circumvents subzero plotting
+              xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
+magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
+barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), 
+        xlab="", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+arrows(bp, means+5+sems, bp, means+5-sems, lwd = 1.0, angle = 90, code = 3, length = 0.025)
+axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
+     labels=c(expression(10^-2), expression(10^-1),expression(10^0),
+              expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+axis(1, las=1, tck=-0.02, at=bp, labels=rep("",5))
+text(x=bp, y=log10(10)+5-xa1, labels=sexLab, xpd=TRUE)
+text(x=bp, y=log10(10)+5-xa2, labels=ageLab, xpd=TRUE)
+text(x=bp, y=log10(10)+5-xa3, labels=carLab, xpd=TRUE)
+text(x=bp, y=log10(0.30)+5, labels=rep("neg",5), xpd=TRUE)
+title(main="B Lymphoid", line=0.5)
+box()
+par(new=FALSE)
+
+# GM
+means <- tmp %>% group_by(group) %>% summarise(avg=mean(CD33))  %>% print()
+means <- means$avg
+sems <-  tmp %>% group_by(group) %>% summarise(sem=se(CD33))  
+sems <- sems$sem
+bp <- barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), # +5 circumvents subzero plotting
+              xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
+magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
+barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), 
+        xlab="", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+arrows(bp, means+5+sems, bp, means+5-sems, lwd = 1.0, angle = 90, code = 3, length = 0.025)
+axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
+     labels=c(expression(10^-2), expression(10^-1),expression(10^0),
+              expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+axis(1, las=1, tck=-0.02, at=bp, labels=rep("",5))
+text(x=bp, y=log10(10)+5-xa1, labels=sexLab, xpd=TRUE)
+text(x=bp, y=log10(10)+5-xa2, labels=ageLab, xpd=TRUE)
+text(x=bp, y=log10(10)+5-xa3, labels=carLab, xpd=TRUE)
+title(main="GM", line=0.5)
+box()
+par(new=FALSE)
+
+# PLT
+ylim=c(25, 3000)
+means <- tmp %>% group_by(group) %>% summarise(avg=mean(PLT))  %>% print()
+means <- means$avg
+sems <-  tmp %>% group_by(group) %>% summarise(sem=se(PLT))  
+sems <- sems$sem
+bp <- barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), # +5 circumvents subzero plotting
+              xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
+magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
+barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), 
+        xlab="", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+
+axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
+     labels=c(expression(10^-2), expression(10^-1),expression(10^0),
+              expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+axis(1, las=1, tck=-0.02, at=bp, labels=rep("",5))
+text(x=bp, y=log10(25)+5-xap1, labels=sexLab, xpd=TRUE)
+text(x=bp, y=log10(25)+5-xap2, labels=ageLab, xpd=TRUE)
+text(x=bp, y=log10(25)+5-xap3, labels=carLab, xpd=TRUE)
+#text(x=4.3, y=log10(30)+5, labels="neg", xpd=TRUE)
+arrows(bp, means+5+sems, bp, means+5-sems, lwd = 1.0, angle = 90, code = 3, length = 0.025)
+title(main="Platelets", line=0.5)
+box()
+par(new=FALSE)
+
+
+## Week 12 ##
+ylim=c(0.2, 200)
+tmp <- dat
+tmp <- tmp[tmp$Week==12, ]
+# Make new column with combined variables
+tmp$group <- paste(tmp$Sex, tmp$Age, tmp$Carriers, sep=", ")
+# Change string to factor
+tmp[17] <- lapply(tmp[17], as.factor)
+tmp$group <- factor(tmp$group, levels = c("F, 8-12, no", "F, 8-12, yes", 
+                                          "M, 8-12, no", "M, 8-12, yes", "M, 21-25, yes"))
+#plot(tmp$group, tmp$Human)
+
+# CD45
+means <- tmp %>% group_by(group) %>% summarise(avg=mean(Human))  %>% print()
+groups <- means$group
+groups <- as.character(groups)
+groups <- strsplit(groups, ", ")
+sexLab <- sapply(groups, function(x) x[1])
+ageLab <- sapply(groups, function(x) x[2])
+carLab <- sapply(groups, function(x) x[3])
+means <- means$avg
+sems <-  tmp %>% group_by(group) %>% summarise(sem=se(Human))  
+sems <- sems$sem
+bp <- barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), # +5 circumvents subzero plotting
+              xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
+magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
+barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), 
+        xlab="", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+arrows(bp, means+5+sems, bp, means+5-sems, lwd = 1.0, angle = 90, code = 3, length = 0.025)
+axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
+     labels=c(expression(10^-2), expression(10^-1),expression(10^0),
+              expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+axis(1, las=1, tck=-0.02, at=bp, labels=rep("",5))
+text(x=bp, y=log10(10)+5-xa1, labels=sexLab, xpd=TRUE)
+text(x=bp, y=log10(10)+5-xa2, labels=ageLab, xpd=TRUE)
+text(x=bp, y=log10(10)+5-xa3, labels=carLab, xpd=TRUE)
+title(main="CD45", line=0.5)
+box()
+par(new=FALSE)
+
+# CD19
+means <- tmp %>% group_by(group) %>% summarise(avg=mean(CD19))  %>% print()
+means <- means$avg
+sems <-  tmp %>% group_by(group) %>% summarise(sem=se(CD19))  
+sems <- sems$sem
+bp <- barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), # +5 circumvents subzero plotting
+              xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
+magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
+barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), 
+        xlab="", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+arrows(bp, means+5+sems, bp, means+5-sems, lwd = 1.0, angle = 90, code = 3, length = 0.025)
+axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
+     labels=c(expression(10^-2), expression(10^-1),expression(10^0),
+              expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+axis(1, las=1, tck=-0.02, at=bp, labels=rep("",5))
+text(x=bp, y=log10(10)+5-xa1, labels=sexLab, xpd=TRUE)
+text(x=bp, y=log10(10)+5-xa2, labels=ageLab, xpd=TRUE)
+text(x=bp, y=log10(10)+5-xa3, labels=carLab, xpd=TRUE)
+title(main="B Lymphoid", line=0.5)
+box()
+par(new=FALSE)
+
+# GM
+means <- tmp %>% group_by(group) %>% summarise(avg=mean(CD33))  %>% print()
+means <- means$avg
+sems <-  tmp %>% group_by(group) %>% summarise(sem=se(CD33))  
+sems <- sems$sem
+bp <- barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), # +5 circumvents subzero plotting
+              xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
+magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
+barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), 
+        xlab="", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+arrows(bp, means+5+sems, bp, means+5-sems, lwd = 1.0, angle = 90, code = 3, length = 0.025)
+axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
+     labels=c(expression(10^-2), expression(10^-1),expression(10^0),
+              expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+axis(1, las=1, tck=-0.02, at=bp, labels=rep("",5))
+text(x=bp, y=log10(10)+5-xa1, labels=sexLab, xpd=TRUE)
+text(x=bp, y=log10(10)+5-xa2, labels=ageLab, xpd=TRUE)
+text(x=bp, y=log10(10)+5-xa3, labels=carLab, xpd=TRUE)
+title(main="GM", line=0.5)
+box()
+par(new=FALSE)
+
+# PLT
+ylim=c(25, 3000)
+means <- tmp %>% group_by(group) %>% summarise(avg=mean(PLT))  %>% print()
+means <- means$avg
+sems <-  tmp %>% group_by(group) %>% summarise(sem=se(PLT))  
+sems <- sems$sem
+bp <- barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), # +5 circumvents subzero plotting
+              xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
+magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
+barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), 
+        xlab="", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+
+axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
+     labels=c(expression(10^-2), expression(10^-1),expression(10^0),
+              expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+axis(1, las=1, tck=-0.02, at=bp, labels=rep("",5))
+text(x=bp, y=log10(25)+5-xap1, labels=sexLab, xpd=TRUE)
+text(x=bp, y=log10(25)+5-xap2, labels=ageLab, xpd=TRUE)
+text(x=bp, y=log10(25)+5-xap3, labels=carLab, xpd=TRUE)
+text(x=4.3, y=log10(35)+5, labels="neg", xpd=TRUE)
+text(x=5.5, y=log10(35)+5, labels="neg", xpd=TRUE)
+arrows(bp, means+5+sems, bp, means+5-sems, lwd = 1.0, angle = 90, code = 3, length = 0.025)
+title(main="Platelets", line=0.5)
+box()
+par(new=FALSE)
+
+
+## Week 20 ##
+ylim=c(0.2, 200)
+tmp <- dat
+tmp <- tmp[tmp$Week==20, ]
+# Make new column with combined variables
+tmp$group <- paste(tmp$Sex, tmp$Age, tmp$Carriers, sep=", ")
+# Change string to factor
+tmp[17] <- lapply(tmp[17], as.factor)
+tmp$group <- factor(tmp$group, levels = c("F, 8-12, no", "F, 8-12, yes", 
+                                          "M, 8-12, no", "M, 8-12, yes", "M, 21-25, yes"))
+#plot(tmp$group, tmp$Human)
+
+# CD45
+means <- tmp %>% group_by(group) %>% summarise(avg=mean(Human))  %>% print()
+groups <- means$group
+groups <- as.character(groups)
+groups <- strsplit(groups, ", ")
+sexLab <- sapply(groups, function(x) x[1])
+ageLab <- sapply(groups, function(x) x[2])
+carLab <- sapply(groups, function(x) x[3])
+means <- means$avg
+sems <-  tmp %>% group_by(group) %>% summarise(sem=se(Human))  
+sems <- sems$sem
+bp <- barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), # +5 circumvents subzero plotting
+              xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
+magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
+barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), 
+        xlab="", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+arrows(bp, means+5+sems, bp, means+5-sems, lwd = 1.0, angle = 90, code = 3, length = 0.025)
+axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
+     labels=c(expression(10^-2), expression(10^-1),expression(10^0),
+              expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+axis(1, las=1, tck=-0.02, at=bp, labels=rep("",5))
+text(x=bp, y=log10(10)+5-xa1, labels=sexLab, xpd=TRUE)
+text(x=bp, y=log10(10)+5-xa2, labels=ageLab, xpd=TRUE)
+text(x=bp, y=log10(10)+5-xa3, labels=carLab, xpd=TRUE)
+title(main="CD45", line=0.5)
+box()
+par(new=FALSE)
+
+# CD19
+means <- tmp %>% group_by(group) %>% summarise(avg=mean(CD19))  %>% print()
+means <- means$avg
+sems <-  tmp %>% group_by(group) %>% summarise(sem=se(CD19))  
+sems <- sems$sem
+bp <- barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), # +5 circumvents subzero plotting
+              xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
+magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
+barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), 
+        xlab="", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+arrows(bp, means+5+sems, bp, means+5-sems, lwd = 1.0, angle = 90, code = 3, length = 0.025)
+axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
+     labels=c(expression(10^-2), expression(10^-1),expression(10^0),
+              expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+axis(1, las=1, tck=-0.02, at=bp, labels=rep("",5))
+text(x=bp, y=log10(10)+5-xa1, labels=sexLab, xpd=TRUE)
+text(x=bp, y=log10(10)+5-xa2, labels=ageLab, xpd=TRUE)
+text(x=bp, y=log10(10)+5-xa3, labels=carLab, xpd=TRUE)
+title(main="B Lymphoid", line=0.5)
+box()
+par(new=FALSE)
+
+# GM
+means <- tmp %>% group_by(group) %>% summarise(avg=mean(CD33))  %>% print()
+means <- means$avg
+sems <-  tmp %>% group_by(group) %>% summarise(sem=se(CD33))  
+sems <- sems$sem
+bp <- barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), # +5 circumvents subzero plotting
+              xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
+magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
+barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), 
+        xlab="", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+arrows(bp, means+5+sems, bp, means+5-sems, lwd = 1.0, angle = 90, code = 3, length = 0.025)
+axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
+     labels=c(expression(10^-2), expression(10^-1),expression(10^0),
+              expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+axis(1, las=1, tck=-0.02, at=bp, labels=rep("",5))
+text(x=bp, y=log10(10)+5-xa1, labels=sexLab, xpd=TRUE)
+text(x=bp, y=log10(10)+5-xa2, labels=ageLab, xpd=TRUE)
+text(x=bp, y=log10(10)+5-xa3, labels=carLab, xpd=TRUE)
+title(main="GM", line=0.5)
+box()
+par(new=FALSE)
+
+# PLT
+ylim=c(25, 3000)
+means <- tmp %>% group_by(group) %>% summarise(avg=mean(PLT))  %>% print()
+means <- means$avg
+sems <-  tmp %>% group_by(group) %>% summarise(sem=se(PLT))  
+sems <- sems$sem
+bp <- barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), # +5 circumvents subzero plotting
+              xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
+magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
+par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
+barplot(means+5, beside=T, yaxt="n", col=cols7, ylim=5+log10(ylim), 
+        xlab="", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
+
+axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
+     labels=c(expression(10^-2), expression(10^-1),expression(10^0),
+              expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
+axis(1, las=1, tck=-0.02, at=bp, labels=rep("",5))
+text(x=bp, y=log10(25)+5-xap1, labels=sexLab, xpd=TRUE)
+text(x=bp, y=log10(25)+5-xap2, labels=ageLab, xpd=TRUE)
+text(x=bp, y=log10(25)+5-xap3, labels=carLab, xpd=TRUE)
+text(x=4.3, y=log10(35)+5, labels="neg", xpd=TRUE)
+arrows(bp, means+5+sems, bp, means+5-sems, lwd = 1.0, angle = 90, code = 3, length = 0.025)
+title(main="Platelets", line=0.5)
+box()
+par(new=FALSE)
+
+dev.off()
+
+
+
+
+
+
+
 # Function for barplot of Old versus Young, subdivided by Sex.
 GroupBarplot2 <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="black", title){
   #  Makes a grouped barplot, time-points plotted together and sexes separated.
@@ -374,50 +867,6 @@ GroupBarplot4 <- function(dataframe, week, valueCol, ylab, ytitle, ylim, cols="b
 
 
 
-
-
-
-# Side by side analysis
-tmp <- BM34
-tmp[, 8:13] <- log10(tmp[, 8:13])
-# for overview, aggregated data frame returning means for numeric variables
-aggregate(tmp, by=list(tmp$Age, tmp$Carriers), FUN=mean, na.rm=TRUE) %>% print()
-# Make new column with combined variables
-tmp$group <- paste(tmp$Sex, ",", tmp$Age, ",", tmp$Carriers)
-# Change string to factor
-tmp[14] <- lapply(tmp[14], as.factor)
-plot(tmp$group, tmp$Human.Percent)
-
-means <- tmp %>% group_by(group) %>% summarise(avg=mean(Human.Percent))  
-groups <- means$group
-means[,2] <- means[,2]+5 # this is to enable subzero plotting on log transformed data
-means <- means$avg
-SEMs <-  tmp %>% group_by(group) %>% summarise(sem=se(Human.Percent))  
-SEMs <- SEMs$sem
-
-# Plot
-ylab=BMylab 
-ylim=c(0.1, 100)
-bp <- barplot(means, beside=T, yaxt="n", col="black", ylim=5+log10(ylim), 
-              xlab="", ylab=ylab, mgp=c(axtitledist,0.5,0), xpd=FALSE)
-arrows(bp, means+SEMs, bp, means-SEMs, lwd = 1.0, angle = 90, code = 3, length = 0.025)
-magaxis(side=2, las=2, mgp=c(3.0, 0.6, 0.0), labels=FALSE, unlog=TRUE)  # magaxis provides easy log ticks
-par(new=TRUE)  # enables replotting over the yaxis ticks, using the next line 
-barplot(means, beside=T, yaxt="n", col="black", ylim=5+log10(ylim), 
-        xlab="group", ylab="", mgp=c(axtitledist,0.5,0), xpd=FALSE)
-par(new=FALSE)
-axis(2, las=2, mgp=c(3,1.7,0), tck=-0.02, hadj=0, at=c(-2+5, -1+5, 0+5, 1+5, 2+5, 3+5, 4+5, 5+5),
-     labels=c(expression(10^-2), expression(10^-1),expression(10^0),
-              expression(10^1),expression(10^2),expression(10^3),expression(10^4),expression(10^5)))
-axis(1, las=2, tck=-0.02, at=bp, labels=groups)
-title(main="CD45", line=0.5)
-box()
-
- 
-#  text(x=2, y=sig1+5, labels=starsF[, valueCol], cex=0.9) # add significance stars
-#  text(x=5, y=sig1+5, labels=starsM[, valueCol], cex=0.9) # add significance stars
-}
-#legend(locator(1),rownames(dat),fill=c("#ee7700","#3333ff"))
 
 
 
@@ -537,6 +986,20 @@ GroupBarplot4(BM34, week=weeks, valueCol=10, cols=cols3, ylab=BMylab, ylim=c(0.1
 GroupBarplot4(BM34, week=weeks, valueCol=9,  cols=cols3, ylab=BMylab, ylim=c(0.1, 100), title="GM")
 
 dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Multifactorial Stats #
 tmp <- BM34
